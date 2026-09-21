@@ -407,4 +407,39 @@ function compressImage(file,maxSize=1400,quality=.68){return new Promise((resolv
 function clearScreenshot(){pendingScreenshot='';$('screenshot').value='';$('fileName').textContent='PNG, JPG or WEBP';$('preview').src='';$('previewWrap').style.display='none'}
 $('form').onsubmit=e=>{e.preventDefault();let t={id:Date.now(),date:$('date').value,pair:$('pair').value,dir:$('dir').value,session:$('session').value,crt:$('crt').value,liq:$('liq').value,confirm:$('confirm').value,risk:num($('risk').value,acc.risk||1),rr:num($('rr').value,2.5),result:$('result').value,pnl:($('result').value==='Loss'?-Math.abs(num($('pnl').value)):$('result').value==='Win'?Math.abs(num($('pnl').value)):0),entry:$('entry').value,exit:$('exit').value,sl:$('sl').value,details:[`Entry: ${$('entry').value}`,`Exit: ${$('exit').value}`,`SL: ${$('sl').value}`].join(' | '),plan:$('plan').value,bias:document.querySelector('input[name="bias"]:checked')?.value||'Bullish',setupQuality:$('setupQuality').value,entryTime:$('entryTime').value,mistakes:selectedMistakes(),rules:RULES.map((_,i)=>$('rule'+i).checked),screenshot:pendingScreenshot};trades.unshift(t);try{persist()}catch(err){trades.shift();alert('This screenshot is too large for browser storage. Try a smaller screenshot.');return}e.target.reset();document.querySelector('input[name="bias"][value="Bullish"]').checked=true;$('date').value=isoToday();$('risk').value=acc.risk||1;$('rr').value=2.5;$('pnl').value=0;renderAddChecklist();renderMistakeGrid();updateTimingGuide();clearScreenshot();render();openTrade(t.id)};
 render();renderCalendar();
-</script></body></html>
+</script>
+<!-- CLOUD SYNC UI -->
+<div class="cloudbar" id="cloudBar">
+  <span id="cloudDot" class="cloud-dot"></span>
+  <span id="cloudStatus">Connecting…</span>
+  <button id="cloudAuthBtn" type="button" onclick="openAuth()">Sign in</button>
+</div>
+
+<div id="authModal" class="auth-modal" onclick="closeAuth(event)">
+  <div class="auth-card" onclick="event.stopPropagation()">
+    <h2>Cloud Sync</h2>
+    <p class="muted">Sign in with the same journal account on your laptop and phone so your trades can sync between devices.</p>
+    <div class="field">
+      <label>EMAIL</label>
+      <input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com">
+    </div>
+    <div class="field">
+      <label>PASSWORD</label>
+      <input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 6 characters">
+    </div>
+    <div class="auth-actions">
+      <button type="button" class="primary" onclick="signInCloud()">Sign in</button>
+      <button type="button" onclick="signUpCloud()">Create account</button>
+    </div>
+    <div class="auth-actions">
+      <button type="button" onclick="syncNow()">Sync / Migrate local data</button>
+      <button type="button" onclick="signOutCloud()">Sign out</button>
+    </div>
+    <div id="authMsg" class="auth-msg"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:8px">
+      <button type="button" onclick="closeAuth()">Close</button>
+    </div>
+  </div>
+</div>
+
+</body></html>
