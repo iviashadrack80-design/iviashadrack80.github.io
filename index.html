@@ -8,9 +8,30 @@ body.theme-light{--bg:#f4f7fb;--panel:#ffffff;--panel2:#f0f4f9;--line:#d4ddea;--
 
 .cloudbar{position:fixed;right:18px;bottom:18px;z-index:90;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:9px 11px;display:flex;align-items:center;gap:9px;box-shadow:0 8px 30px rgba(0,0,0,.25)}.cloud-dot{width:9px;height:9px;border-radius:50%;background:#f5c451}.cloud-dot.ok{background:#35d07f}.cloud-dot.err{background:#ff5c72}.cloudbar button{padding:7px 10px;font-size:12px}.auth-modal{position:fixed;inset:0;background:rgba(0,0,0,.78);display:none;align-items:center;justify-content:center;padding:18px;z-index:200}.auth-modal.open{display:flex}.auth-card{width:min(430px,100%);background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 20px 70px rgba(0,0,0,.4)}.auth-card h2{margin-bottom:7px}.auth-card .field{margin-top:12px}.auth-actions{display:flex;gap:8px;margin-top:15px}.auth-actions button{flex:1}.auth-msg{min-height:18px;margin-top:10px;font-size:12px;color:var(--muted)}body.theme-light{--bg:#f4f6fb;--panel:#fff;--panel2:#f8f9fc;--line:#dbe1ec;--text:#182033;--muted:#667085}body.theme-light .side{background:#fff}body.theme-light button{background:#eef2f7;color:#182033}body.theme-light .nav button{color:#667085}body.theme-light .nav button.active,body.theme-light .nav button:hover{background:#e9edf5;color:#182033}
 @media(max-width:900px){.row{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}.performance-grid{grid-template-columns:1fr 1fr}}@media(max-width:600px){.main{margin-left:0;width:100%;padding:16px}.side{position:relative;width:100%;height:auto}.app{display:block}.cards{grid-template-columns:1fr 1fr}.performance-grid{grid-template-columns:1fr}.formgrid{grid-template-columns:1fr 1fr}}
+
+/* Lot Size Calculator */
+.calc-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:14px}
+.calc-fields{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.calc-fields .full{grid-column:1/-1}
+.calc-result-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.calc-result{background:var(--panel2);border:1px solid var(--line);padding:13px;border-radius:10px}
+.calc-result .value{font-size:21px;word-break:break-word}
+.calc-hero{background:linear-gradient(135deg,#151d36,#101a2a);border:1px solid #33415b;border-radius:14px;padding:18px;margin-bottom:12px}
+.calc-hero .big{font-size:34px;font-weight:900;line-height:1.1}
+.calc-hero .sub{color:var(--muted);font-size:12px;margin-top:5px}
+.calc-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.calc-tabs button.active{background:var(--accent);border-color:var(--accent)}
+.calc-help{font-size:11px;color:var(--muted);line-height:1.5}
+.calc-warning{margin-top:10px;padding:10px 12px;border-radius:9px;border:1px solid #6d5520;background:#211b0e;color:#f5d889;font-size:12px;line-height:1.45}
+.calc-ok{margin-top:10px;padding:10px 12px;border-radius:9px;border:1px solid #256f4b;background:#0d2118;color:#8de0b1;font-size:12px;line-height:1.45}
+.calc-formula{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:#0a101b;border:1px solid var(--line);padding:12px;border-radius:9px;overflow:auto;white-space:pre-wrap}
+body.theme-light .calc-hero{background:#f4f6fb;border-color:#cbd5e1}
+body.theme-light .calc-formula{background:#f8fafc}
+@media(max-width:850px){.calc-grid{grid-template-columns:1fr}}
+@media(max-width:600px){.calc-fields,.calc-result-grid{grid-template-columns:1fr}}
 </style></head><body>
 <div class="app"><aside class="side"><div class="logo">⚡ <span>ShadrackTrades</span>.com</div><div class="nav">
-<button class="active" onclick="page('dashboard',this)">▦ Dashboard</button><button onclick="page('add',this)">＋ Add Trade</button><button onclick="page('trades',this)">☷ Trade Log</button><button onclick="page('calendar',this)">📅 Calendar</button><button onclick="page('analytics',this)">◔ Analytics</button>
+<button class="active" onclick="page('dashboard',this)">▦ Dashboard</button><button onclick="page('add',this)">＋ Add Trade</button><button onclick="page('trades',this)">☷ Trade Log</button><button onclick="page('calendar',this)">📅 Calendar</button><button onclick="page('analytics',this)">◔ Analytics</button><button onclick="page('calculator',this)">🧮 Lot Size Calculator</button>
 <div class="nav-title">Reviews</div><button onclick="page('daily',this)">📝 Daily Review</button><button onclick="page('weekly',this)">📊 Weekly Review</button><button onclick="page('monthly',this)">📈 Monthly Review</button>
 <div class="nav-title">Account</div><button onclick="page('account',this)">◎ Account Settings</button><button onclick="page('settings',this)">⚙ Journal Settings</button></div><div style="margin-top:25px" class="muted">Focus</div><div class="note"><b>US30 • XAUUSD</b><br><span class="muted">Asian • London • New York</span></div></aside>
 <main class="main"><div class="top"><div><h1 id="title">Trading Dashboard</h1><div class="muted">Execution, statistics, reviews & discipline in one place.</div></div><button class="primary" onclick="page('add')">＋ Record Trade</button></div>
@@ -35,6 +56,72 @@ body.theme-light{--bg:#f4f7fb;--panel:#ffffff;--panel2:#f0f4f9;--line:#d4ddea;--
 <section id="weekly" class="page"><div class="panel review"><h2>Weekly Review</h2><div class="filters"><label style="width:auto;align-self:center">WEEK START</label><input id="weekDate" type="date" onchange="renderWeekly()"><button onclick="setWeekCurrent()">Current Week</button></div><div id="weeklySummary"></div><div class="reviewgrid"><div><label>WHAT WORKED THIS WEEK?</label><textarea id="weekWorked"></textarea></div><div><label>RECURRING MISTAKES</label><textarea id="weekMistakes"></textarea></div><div><label>SETUPS / SESSIONS TO STUDY</label><textarea id="weekStudy"></textarea></div><div><label>PSYCHOLOGY PATTERNS</label><textarea id="weekPsych"></textarea></div><div class="full"><label>NEXT WEEK: CONTINUE / STOP / IMPROVE</label><textarea id="weekNext"></textarea></div></div><div class="review-actions"><button class="primary" onclick="saveReview('weekly')">Save Weekly Review</button></div></div></section>
 
 <section id="monthly" class="page"><div class="panel review"><h2>Monthly Review</h2><div class="filters"><label style="width:auto;align-self:center">MONTH</label><input id="monthDate" type="month" onchange="renderMonthly()"><button onclick="setMonthCurrent()">Current Month</button></div><div id="monthlySummary"></div><div class="reviewgrid"><div><label>MONTHLY WINS</label><textarea id="monthWins"></textarea></div><div><label>BIGGEST MISTAKE</label><textarea id="monthMistake"></textarea></div><div><label>BEST SETUP / CONDITIONS</label><textarea id="monthBest"></textarea></div><div><label>PSYCHOLOGY & DISCIPLINE</label><textarea id="monthPsych"></textarea></div><div class="full"><label>GOALS & PROCESS TARGETS FOR NEXT MONTH</label><textarea id="monthGoals"></textarea></div></div><div class="review-actions"><button class="primary" onclick="saveReview('monthly')">Save Monthly Review</button></div></div></section>
+
+
+<section id="calculator" class="page">
+  <div class="panel">
+    <h2>Advanced Lot Size Calculator</h2>
+    <p class="muted">Calculate position size from your account risk, stop distance and instrument specifications. Built for Forex and adaptable to Gold, indices and other CFDs.</p>
+    <div class="calc-tabs">
+      <button type="button" id="calcModeForex" class="active" onclick="setCalcMode('forex')">Forex</button>
+      <button type="button" id="calcModeCfd" onclick="setCalcMode('cfd')">Gold / Indices / CFD</button>
+    </div>
+    <div class="calc-grid">
+      <div>
+        <div class="panel" style="margin:0">
+          <h3>Trade Inputs</h3>
+          <div class="calc-fields">
+            <div><label>ACCOUNT BALANCE</label><input id="calcBalance" type="number" min="0" step="0.01"></div>
+            <div><label>RISK PER TRADE (%)</label><input id="calcRisk" type="number" min="0" max="100" step="0.01"></div>
+            <div><label>INSTRUMENT</label><select id="calcSymbol" onchange="applyCalcPreset()"><option>EURUSD</option><option>GBPUSD</option><option>USDJPY</option><option>USDCHF</option><option>AUDUSD</option><option>USDCAD</option><option>NZDUSD</option><option>EURGBP</option><option>XAUUSD</option><option>US30</option><option>Custom</option></select></div>
+            <div><label>DIRECTION</label><select id="calcDirection"><option>Buy</option><option>Sell</option></select></div>
+            <div><label>ENTRY PRICE</label><input id="calcEntry" type="number" min="0" step="any" placeholder="e.g. 1.10500"></div>
+            <div><label>STOP LOSS PRICE</label><input id="calcStop" type="number" min="0" step="any" placeholder="e.g. 1.10000"></div>
+            <div><label>TAKE PROFIT PRICE (OPTIONAL)</label><input id="calcTp" type="number" min="0" step="any" placeholder="Optional"></div>
+            <div><label>LEVERAGE (1:X)</label><input id="calcLeverage" type="number" min="1" step="1" value="100"></div>
+            <div><label>SPREAD (PIPS / POINTS)</label><input id="calcSpread" type="number" min="0" step="any" value="0"></div>
+            <div><label>COMMISSION ($ PER LOT, ROUND TURN)</label><input id="calcCommission" type="number" min="0" step="0.01" value="0"></div>
+            <div id="forexFields"><label>PIP SIZE</label><input id="calcPipSize" type="number" min="0.00000001" step="any" value="0.0001"><div class="calc-help">0.0001 for most pairs; 0.01 for JPY pairs.</div></div>
+            <div id="forexContractField"><label>CONTRACT SIZE (UNITS / STANDARD LOT)</label><input id="calcContract" type="number" min="0.0001" step="any" value="100000"></div>
+            <div id="cfdFields" style="display:none"><label>VALUE PER 1.00 PRICE MOVE / LOT ($)</label><input id="calcPointValue" type="number" min="0.00000001" step="any" value="100"><div class="calc-help">Use your broker's contract specification. Example: if 1 lot gains $100 when price moves 1.00, enter 100.</div></div>
+            <div id="conversionField"><label>QUOTE → ACCOUNT CURRENCY RATE</label><input id="calcConversion" type="number" min="0.00000001" step="any" value="1"><div class="calc-help">Enter the current conversion rate when quote currency differs from your account currency.</div></div>
+            <div class="full"><button class="primary" type="button" onclick="calculateLotSize()">Calculate Position Size</button><button type="button" onclick="resetLotCalculator()" style="margin-left:8px">Reset</button></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="calc-hero">
+          <div class="label">RECOMMENDED LOT SIZE</div>
+          <div class="big" id="calcLot">—</div>
+          <div class="sub" id="calcLotSub">Enter valid trade details and calculate.</div>
+        </div>
+        <div class="calc-result-grid">
+          <div class="calc-result"><div class="label">RISK AMOUNT</div><div class="value" id="calcRiskAmount">$0.00</div></div>
+          <div class="calc-result"><div class="label">STOP DISTANCE</div><div class="value" id="calcDistance">0</div></div>
+          <div class="calc-result"><div class="label">PIP / POINT RISK</div><div class="value" id="calcPipRisk">$0.00</div></div>
+          <div class="calc-result"><div class="label">POSITION UNITS</div><div class="value" id="calcUnits">0</div></div>
+          <div class="calc-result"><div class="label">EST. LOSS AT SL</div><div class="value red" id="calcLoss">$0.00</div></div>
+          <div class="calc-result"><div class="label">EST. PROFIT AT TP</div><div class="value green" id="calcProfit">$0.00</div></div>
+          <div class="calc-result"><div class="label">RISK : REWARD</div><div class="value" id="calcRR">—</div></div>
+          <div class="calc-result"><div class="label">EST. MARGIN</div><div class="value" id="calcMargin">$0.00</div></div>
+          <div class="calc-result"><div class="label">MARGIN LEVEL USED</div><div class="value" id="calcMarginPct">0%</div></div>
+          <div class="calc-result"><div class="label">SPREAD COST</div><div class="value" id="calcSpreadCost">$0.00</div></div>
+        </div>
+        <div id="calcMessage" class="calc-help" style="margin-top:10px"></div>
+      </div>
+    </div>
+    <div class="section panel" style="margin-top:14px">
+      <h3>How the calculation works</h3>
+      <div id="calcFormula" class="calc-formula">Risk amount = Account balance × Risk %
+Lot size = Risk amount ÷ (Stop distance × value of each price unit per lot)
+TP profit = Lot size × TP distance × value per price unit per lot
+Margin = Notional value ÷ Leverage
+
+Always use your broker's contract size / tick or point value for CFDs. The calculator does not assume that every broker uses the same US30 or XAUUSD specification.</div>
+      <div class="calc-warning"><b>Broker specification check:</b> Forex pip values, Gold contract sizes, US30 point values, minimum lot sizes, lot steps, leverage and commissions vary by broker. Verify the symbol specification in your trading platform before placing an order.</div>
+    </div>
+  </div>
+</section>
 
 <section id="account" class="page"><div class="panel"><h2>Account Settings</h2><p class="muted">Set the size of the account you are journaling. There is no funded-account phase tracker here.</p><div class="formgrid"><div><label>ACCOUNT SIZE ($)</label><input id="accountSize" type="number" step=".01" value="5000"></div><div><label>DEFAULT RISK PER TRADE (%)</label><input id="defaultRisk" type="number" step=".01" value="1"></div><div class="full"><button class="primary" onclick="saveAccount()">Save Account Settings</button></div></div><div class="section" id="accountBox"></div></div></section>
 
@@ -114,10 +201,10 @@ async function signInCloud(){if(!configuredSupabase()){showAuthMsg('Add your Sup
 async function signUpCloud(){if(!configuredSupabase()){showAuthMsg('Add your Supabase URL and publishable key to supabase-config.js first.');return}const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||password.length<6){showAuthMsg('Enter a valid email and a password of at least 6 characters.');return}showAuthMsg('Creating account…');const {error}=await cloud.auth.signUp({email,password});showAuthMsg(error?error.message:'Account created. Check your email if confirmation is enabled.')}
 async function signOutCloud(){if(cloud)await cloud.auth.signOut();closeAuth()}
 function localSnapshot(){return{trades,acc,reviews}}
-async function loadCloud(){if(!cloud||!cloudUser)return;setCloudStatus('Loading cloud…');try{const [{data:ts,error:te},{data:rs,error:re},{data:ss,error:se}]=await Promise.all([cloud.from(CLOUD_TABLES.trades).select('id,data').eq('user_id',cloudUser.id),cloud.from(CLOUD_TABLES.reviews).select('key,data').eq('user_id',cloudUser.id),cloud.from(CLOUD_TABLES.settings).select('data').eq('user_id',cloudUser.id).maybeSingle()]);if(te||re||se)throw te||re||se;const hasLocal=trades.length||Object.keys(reviews).length||localStorage.getItem('crtProAccount');if((ts?.length||rs?.length||ss?.data)&&hasLocal){const local=localSnapshot();if(ts?.length)trades=ts.map(x=>normalizeTrade(x.data));if(rs?.length)reviews=Object.fromEntries(rs.map(x=>[x.key,x.data]));if(ss?.data){acc=ss.data.account||acc;if(ss.data.appearance){localStorage.setItem(APPEARANCE_KEY,JSON.stringify(ss.data.appearance));applyAppearance()}}localStorage.setItem('crtProTrades',JSON.stringify(trades));localStorage.setItem('crtProReviews',JSON.stringify(reviews));localStorage.setItem('crtProAccount',JSON.stringify(acc));}else if(hasLocal){await syncCloud();}else{trades=(ts||[]).map(x=>normalizeTrade(x.data));reviews=Object.fromEntries((rs||[]).map(x=>[x.key,x.data]));acc=ss?.data?.account||acc;if(ss?.data?.appearance){localStorage.setItem(APPEARANCE_KEY,JSON.stringify(ss.data.appearance));applyAppearance()}localStorage.setItem('crtProTrades',JSON.stringify(trades));localStorage.setItem('crtProReviews',JSON.stringify(reviews));localStorage.setItem('crtProAccount',JSON.stringify(acc))}cloudReady=true;setCloudStatus('Synced',true);render();renderCalendar();renderWeeklyPerformance();}catch(e){console.error(e);setCloudStatus('Cloud error',false,true);showAuthMsg('Cloud load failed: '+(e.message||e))}}
+async function loadCloud(){if(!cloud||!cloudUser)return;setCloudStatus('Loading cloud…');try{const [{data:ts,error:te},{data:rs,error:re},{data:ss,error:se}]=await Promise.all([cloud.from(CLOUD_TABLES.trades).select('id,data').eq('user_id',cloudUser.id),cloud.from(CLOUD_TABLES.reviews).select('key,data').eq('user_id',cloudUser.id),cloud.from(CLOUD_TABLES.settings).select('data').eq('user_id',cloudUser.id).maybeSingle()]);if(te||re||se)throw te||re||se;const hasLocal=trades.length||Object.keys(reviews).length||localStorage.getItem('crtProAccount');if((ts?.length||rs?.length||ss?.data)&&hasLocal){const local=localSnapshot();if(ts?.length)trades=ts.map(x=>normalizeTrade(x.data));if(rs?.length)reviews=Object.fromEntries(rs.map(x=>[x.key,x.data]));if(ss?.data){acc=ss.data.account||acc;if(ss.data.appearance){localStorage.setItem(APPEARANCE_KEY,JSON.stringify(ss.data.appearance));applyAppearance()}}localStorage.setItem('crtProTrades',JSON.stringify(trades));localStorage.setItem('crtProReviews',JSON.stringify(reviews));localStorage.setItem('crtProAccount',JSON.stringify(acc));}else if(hasLocal){await syncCloud();}else{trades=(ts||[]).map(x=>normalizeTrade(x.data));reviews=Object.fromEntries((rs||[]).map(x=>[x.key,x.data]));acc=ss?.data?.account||acc;if(ss?.data?.appearance){localStorage.setItem(APPEARANCE_KEY,JSON.stringify(ss.data.appearance));applyAppearance()}localStorage.setItem('crtProTrades',JSON.stringify(trades));localStorage.setItem('crtProReviews',JSON.stringify(reviews));localStorage.setItem('crtProAccount',JSON.stringify(acc))}cloudReady=true;setCloudStatus('Synced',true);render();renderCalendar();loadCalcState();renderWeeklyPerformance();}catch(e){console.error(e);setCloudStatus('Cloud error',false,true);showAuthMsg('Cloud load failed: '+(e.message||e))}}
 async function syncCloud(){if(!cloud||!cloudUser||cloudBusy)return;cloudBusy=true;setCloudStatus('Syncing…');try{const user_id=cloudUser.id;for(const t of trades){const {error}=await cloud.from(CLOUD_TABLES.trades).upsert({id:String(t.id),user_id,data:t},{onConflict:'id,user_id'});if(error)throw error}const reviewRows=Object.entries(reviews).map(([key,data])=>({user_id,key,data}));if(reviewRows.length){const {error}=await cloud.from(CLOUD_TABLES.reviews).upsert(reviewRows,{onConflict:'user_id,key'});if(error)throw error}const {data:remoteTrades,error:re}=await cloud.from(CLOUD_TABLES.trades).select('id').eq('user_id',user_id);if(re)throw re;const localIds=new Set(trades.map(t=>String(t.id)));const stale=(remoteTrades||[]).map(x=>String(x.id)).filter(id=>!localIds.has(id));if(stale.length){const {error:de}=await cloud.from(CLOUD_TABLES.trades).delete().eq('user_id',user_id).in('id',stale);if(de)throw de}const {error:se}=await cloud.from(CLOUD_TABLES.settings).upsert({user_id,data:{account:acc,appearance:getAppearance()}},{onConflict:'user_id'});if(se)throw se;cloudReady=true;setCloudStatus('Synced',true)}finally{cloudBusy=false}}
 async function syncNow(){if(!cloudUser){showAuthMsg('Sign in first.');return}showAuthMsg('Syncing local journal to cloud…');try{await syncCloud();showAuthMsg('Synced. Your journal is now available on other devices when you sign in.')}catch(e){showAuthMsg('Sync failed: '+(e.message||e))}}
-function page(id,btn){let target=$(id);if(!target)return;document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));target.classList.add('active');document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));if(btn)btn.classList.add('active');let titles={dashboard:'Trading Dashboard',add:'Record Trade',trades:'Trade Log',calendar:'Trade Calendar',analytics:'Analytics',daily:'Daily Review',weekly:'Weekly Review',monthly:'Monthly Review',account:'Account Settings',tradeDetail:'Trade Review',settings:'Journal Settings'};if($('title'))$('title').textContent=titles[id]||'Trading Journal';render();if(id==='daily')renderDaily();if(id==='weekly')renderWeekly();if(id==='monthly')renderMonthly();if(id==='calendar')renderCalendar()}
+function page(id,btn){let target=$(id);if(!target)return;document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));target.classList.add('active');document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));if(btn)btn.classList.add('active');let titles={dashboard:'Trading Dashboard',add:'Record Trade',trades:'Trade Log',calendar:'Trade Calendar',analytics:'Analytics',daily:'Daily Review',weekly:'Weekly Review',monthly:'Monthly Review',account:'Account Settings',tradeDetail:'Trade Review',settings:'Journal Settings',calculator:'Lot Size Calculator'};if($('title'))$('title').textContent=titles[id]||'Trading Journal';render();if(id==='daily')renderDaily();if(id==='weekly')renderWeekly();if(id==='monthly')renderMonthly();if(id==='calendar')renderCalendar();if(id==='calculator')renderCalc()}
 function timingGuide(session){if(session==='Asia')return 'Kenya time: mark the most recent 15m high/low during 2:00–3:00 AM. Valid sweep/entry window: 2:00–5:00 AM EAT.';if(session==='New York')return 'New York time: use the 8:00 AM 1H candle high/low. Do not enter before 9:30 AM. Stop taking this setup after 11:30 AM.';return 'London timing guide not configured yet.'}
 function timingStatus(t){const s=t?.session||'';const v=t?.entryTime||'';if(!v)return 'Not recorded';const [h,m]=v.split(':').map(Number);const mins=h*60+m;if(s==='Asia')return mins>=120&&mins<=300?'Valid — Asia window':'Outside Asia window';if(s==='New York')return mins>=570&&mins<=690?'Valid — NY window':'Outside NY window';return 'Recorded — London timing';}
 function updateTimingGuide(){const s=$('session')?.value||'';if($('timingGuide'))$('timingGuide').textContent=timingGuide(s);if($('entryTime')){const t={session:s,entryTime:$('entryTime').value};const status=timingStatus(t);$('timingStatus').textContent=status;$('timingStatus').className='timing-status '+(status.startsWith('Valid')?'timing-valid':status==='Not recorded'?'timing-neutral':'timing-invalid')}}
@@ -254,6 +341,149 @@ function renderAnalytics(){
 }
 
 function groupBest(key){let g={};trades.forEach(t=>(g[t[key]]??=[]).push(t));return Object.entries(g).map(([name,a])=>({name,r:stats(a).r})).sort((a,b)=>b.r-a.r)[0]}
+
+const CALC_KEY='crtProLotCalculator';
+const CALC_PRESETS={
+  EURUSD:{mode:'forex',pip:.0001,contract:100000,conversion:1},
+  GBPUSD:{mode:'forex',pip:.0001,contract:100000,conversion:1},
+  USDJPY:{mode:'forex',pip:.01,contract:100000,conversion:1},
+  USDCHF:{mode:'forex',pip:.0001,contract:100000,conversion:1},
+  AUDUSD:{mode:'forex',pip:.0001,contract:100000,conversion:1},
+  USDCAD:{mode:'forex',pip:.0001,contract:100000,conversion:1},
+  NZDUSD:{mode:'forex',pip:.0001,contract:100000,conversion:1},
+  EURGBP:{mode:'forex',pip:.0001,contract:100000,conversion:1},
+  XAUUSD:{mode:'cfd',pointValue:100,conversion:1},
+  US30:{mode:'cfd',pointValue:100,conversion:1},
+  Custom:{mode:'forex',pip:.0001,contract:100000,conversion:1}
+};
+function calcState(){
+  return {
+    mode:localStorage.getItem(CALC_KEY+'_mode')||'forex',
+    symbol:$('calcSymbol')?.value||'EURUSD',
+    direction:$('calcDirection')?.value||'Buy',
+    balance:num($('calcBalance')?.value,acc.start||5000),
+    risk:num($('calcRisk')?.value,acc.risk||1),
+    entry:num($('calcEntry')?.value),
+    stop:num($('calcStop')?.value),
+    tp:num($('calcTp')?.value),
+    leverage:num($('calcLeverage')?.value,100),
+    spread:num($('calcSpread')?.value),
+    commission:num($('calcCommission')?.value),
+    pip:num($('calcPipSize')?.value,.0001),
+    contract:num($('calcContract')?.value,100000),
+    pointValue:num($('calcPointValue')?.value,100),
+    conversion:num($('calcConversion')?.value,1)
+  };
+}
+function saveCalcState(){
+  if(!$('calcSymbol'))return;
+  localStorage.setItem(CALC_KEY,JSON.stringify(calcState()));
+}
+function loadCalcState(){
+  if(!$('calcSymbol'))return;
+  let d={};try{d=JSON.parse(localStorage.getItem(CALC_KEY)||'{}')}catch(e){}
+  $('calcBalance').value=d.balance||acc.start||5000;
+  $('calcRisk').value=d.risk??acc.risk??1;
+  $('calcSymbol').value=d.symbol||'EURUSD';
+  $('calcDirection').value=d.direction||'Buy';
+  $('calcEntry').value=d.entry||'';
+  $('calcStop').value=d.stop||'';
+  $('calcTp').value=d.tp||'';
+  $('calcLeverage').value=d.leverage||100;
+  $('calcSpread').value=d.spread??0;
+  $('calcCommission').value=d.commission??0;
+  applyCalcPreset(false,d.mode||'forex');
+}
+function setCalcMode(mode){
+  localStorage.setItem(CALC_KEY+'_mode',mode);
+  const isForex=mode==='forex';
+  $('calcModeForex').classList.toggle('active',isForex);
+  $('calcModeCfd').classList.toggle('active',!isForex);
+  $('forexFields').style.display=isForex?'block':'none';
+  $('forexContractField').style.display=isForex?'block':'none';
+  $('cfdFields').style.display=isForex?'none':'block';
+  $('conversionField').style.display=isForex?'block':'none';
+}
+function applyCalcPreset(save=true,forcedMode=null){
+  const sym=$('calcSymbol').value,p=CALC_PRESETS[sym]||CALC_PRESETS.Custom;
+  setCalcMode(forcedMode||p.mode);
+  if(p.pip!=null)$('calcPipSize').value=p.pip;
+  if(p.contract!=null)$('calcContract').value=p.contract;
+  if(p.pointValue!=null)$('calcPointValue').value=p.pointValue;
+  if(p.conversion!=null)$('calcConversion').value=p.conversion;
+  if(save)saveCalcState();
+}
+function fmtMoney(v){return '$'+Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
+function fmtNum(v,d=2){return Number(v||0).toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d})}
+function clearCalcResults(){
+  ['calcLot','calcRiskAmount','calcDistance','calcPipRisk','calcUnits','calcLoss','calcProfit','calcRR','calcMargin','calcMarginPct','calcSpreadCost'].forEach(id=>{if($(id))$(id).textContent=id==='calcLot'?'—':id==='calcRR'?'—':id==='calcDistance'?'0':id==='calcUnits'?'0':id==='calcMarginPct'?'0%':'$0.00'});
+}
+function calculateLotSize(){
+  const d=calcState();saveCalcState();
+  const msg=$('calcMessage');
+  if(!(d.balance>0)||!(d.risk>0)||d.risk>100){msg.innerHTML='<div class="calc-warning">Enter a valid account balance and risk percentage between 0 and 100.</div>';clearCalcResults();return}
+  if(!(d.entry>0)||!(d.stop>0)||d.entry===d.stop){msg.innerHTML='<div class="calc-warning">Enter valid Entry and Stop Loss prices. They must be different.</div>';clearCalcResults();return}
+  const distance=Math.abs(d.entry-d.stop);
+  const isForex=d.mode==='forex';
+  let unitValuePerPriceUnit;
+  let distanceUnits;
+  if(isForex){
+    if(!(d.pip>0)||!(d.contract>0)||!(d.conversion>0)){msg.innerHTML='<div class="calc-warning">Check pip size, contract size and quote-to-account conversion.</div>';return}
+    distanceUnits=distance/d.pip;
+    unitValuePerPriceUnit=d.contract*d.conversion;
+  }else{
+    if(!(d.pointValue>0)){msg.innerHTML='<div class="calc-warning">Enter your broker’s value per 1.00 price move per lot.</div>';return}
+    distanceUnits=distance;
+    unitValuePerPriceUnit=d.pointValue;
+  }
+  const riskAmount=d.balance*d.risk/100;
+  const spreadUnits=isForex?(d.spread||0):distance>0?(d.spread||0):0;
+  const spreadCostPerLot=spreadUnits*unitValuePerPriceUnit*(isForex?d.pip:1);
+  const commissionPerLot=Math.max(0,d.commission);
+  const effectiveRiskPerLot=distance*unitValuePerPriceUnit+spreadCostPerLot+commissionPerLot;
+  if(!(effectiveRiskPerLot>0)){msg.innerHTML='<div class="calc-warning">The calculated risk per lot is zero. Check your instrument settings.</div>';return}
+  let lots=riskAmount/effectiveRiskPerLot;
+  const tpDistance=d.tp>0?Math.abs(d.tp-d.entry):0;
+  const grossProfit=d.tp>0?tpDistance*unitValuePerPriceUnit*lots:0;
+  const tpProfit=Math.max(0,grossProfit-spreadCostPerLot*lots-commissionPerLot*lots);
+  const totalLoss=lots*effectiveRiskPerLot;
+  const rr=d.tp>0&&distance>0?tpDistance/distance:0;
+  let notional;
+  if(isForex){
+    // Approximate margin in account currency using the base-currency notional.
+    const baseNotional=lots*d.contract*d.entry;
+    notional=baseNotional;
+  }else{
+    notional=lots*d.pointValue*d.entry;
+  }
+  const margin=notional/Math.max(1,d.leverage);
+  const marginPct=d.balance?margin/d.balance*100:0;
+  $('calcLot').textContent=fmtNum(lots,3);
+  $('calcLotSub').textContent=(isForex?fmtNum(lots*d.contract,0)+' units':'Broker-dependent contract quantity')+' • risk capped near '+fmtMoney(riskAmount);
+  $('calcRiskAmount').textContent=fmtMoney(riskAmount);
+  $('calcDistance').textContent=isForex?fmtNum(distanceUnits,1)+' pips':fmtNum(distance,2)+' points';
+  $('calcPipRisk').textContent=fmtMoney(lots*unitValuePerPriceUnit*(isForex?d.pip:1));
+  $('calcUnits').textContent=fmtNum(isForex?lots*d.contract:lots,0);
+  $('calcLoss').textContent='-'+fmtMoney(totalLoss);
+  $('calcProfit').textContent=d.tp>0?fmtMoney(tpProfit):'—';
+  $('calcRR').textContent=d.tp>0?fmtNum(rr,2)+'R':'—';
+  $('calcMargin').textContent=fmtMoney(margin);
+  $('calcMarginPct').textContent=fmtNum(marginPct,2)+'%';
+  $('calcSpreadCost').textContent=fmtMoney(spreadCostPerLot*lots);
+  $('calcFormula').textContent=isForex
+    ? 'Risk amount = Balance × Risk %\\nPip value per standard lot = Contract size × Pip size × Quote→Account conversion\\nLot size = Risk amount ÷ (SL pips × pip value per standard lot + spread cost + commission)\\nTP profit = TP distance × value per price unit × lots − trading costs\\nEstimated margin ≈ (Lots × contract size × entry price) ÷ leverage'
+    : 'Risk amount = Balance × Risk %\\nLoss per lot = SL price distance × broker value per 1.00 price move per lot\\nLot size = Risk amount ÷ (Loss per lot + spread cost + commission)\\nTP profit = TP price distance × broker value per 1.00 move × lots − trading costs\\nMargin is an estimate and depends on your broker’s CFD contract specification.';
+  const brokerText=isForex
+    ? 'Forex calculation uses the contract size and pip size entered above. For pairs where the quote currency is not your account currency, enter the current conversion rate.'
+    : 'CFD calculation uses the broker value you entered for a 1.00 price move per lot. This is important because Gold and US30 specifications differ between brokers.';
+  msg.innerHTML='<div class="calc-ok">'+brokerText+'</div>';
+}
+function resetLotCalculator(){
+  localStorage.removeItem(CALC_KEY);localStorage.removeItem(CALC_KEY+'_mode');
+  $('calcBalance').value=acc.start||5000;$('calcRisk').value=acc.risk||1;$('calcSymbol').value='EURUSD';$('calcDirection').value='Buy';$('calcEntry').value='';$('calcStop').value='';$('calcTp').value='';$('calcLeverage').value=100;$('calcSpread').value=0;$('calcCommission').value=0;applyCalcPreset();clearCalcResults();$('calcMessage').textContent='';
+}
+function renderCalc(){if(!$('calcSymbol'))return;if(!$('calcBalance').value)loadCalcState();setCalcMode(localStorage.getItem(CALC_KEY+'_mode')||'forex');}
+
 function saveAccount(){acc={start:Math.max(0,num($('accountSize').value)),risk:Math.max(0,num($('defaultRisk').value,1))};persist();render();alert('Account settings saved.')}
 function renderAccount(){let s=stats(),bal=num(acc.start)+s.p,ret=num(acc.start)?s.p/num(acc.start)*100:0;$('accountBox').innerHTML=`<div class="row3"><div class="card"><div class="label">ACCOUNT SIZE</div><div class="value">$${num(acc.start).toFixed(2)}</div></div><div class="card"><div class="label">CURRENT BALANCE</div><div class="value">$${bal.toFixed(2)}</div></div><div class="card"><div class="label">NET RETURN</div><div class="value ${ret>=0?'green':'red'}">${ret.toFixed(2)}%</div></div></div>`}
 function openTrade(id){
@@ -406,6 +636,9 @@ $('screenshot').onchange=async()=>{let f=$('screenshot').files[0];if(!f)return;$
 function compressImage(file,maxSize=1400,quality=.68){return new Promise((resolve,reject)=>{let r=new FileReader();r.onload=()=>{let img=new Image();img.onload=()=>{let scale=Math.min(1,maxSize/Math.max(img.width,img.height)),w=Math.max(1,Math.round(img.width*scale)),h=Math.max(1,Math.round(img.height*scale)),c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);resolve(c.toDataURL('image/jpeg',quality))};img.onerror=reject;img.src=r.result};r.onerror=reject;r.readAsDataURL(file)})}
 function clearScreenshot(){pendingScreenshot='';$('screenshot').value='';$('fileName').textContent='PNG, JPG or WEBP';$('preview').src='';$('previewWrap').style.display='none'}
 $('form').onsubmit=e=>{e.preventDefault();let t={id:Date.now(),date:$('date').value,pair:$('pair').value,dir:$('dir').value,session:$('session').value,crt:$('crt').value,liq:$('liq').value,confirm:$('confirm').value,risk:num($('risk').value,acc.risk||1),rr:num($('rr').value,2.5),result:$('result').value,pnl:($('result').value==='Loss'?-Math.abs(num($('pnl').value)):$('result').value==='Win'?Math.abs(num($('pnl').value)):0),entry:$('entry').value,exit:$('exit').value,sl:$('sl').value,details:[`Entry: ${$('entry').value}`,`Exit: ${$('exit').value}`,`SL: ${$('sl').value}`].join(' | '),plan:$('plan').value,bias:document.querySelector('input[name="bias"]:checked')?.value||'Bullish',setupQuality:$('setupQuality').value,entryTime:$('entryTime').value,mistakes:selectedMistakes(),rules:RULES.map((_,i)=>$('rule'+i).checked),screenshot:pendingScreenshot};trades.unshift(t);try{persist()}catch(err){trades.shift();alert('This screenshot is too large for browser storage. Try a smaller screenshot.');return}e.target.reset();document.querySelector('input[name="bias"][value="Bullish"]').checked=true;$('date').value=isoToday();$('risk').value=acc.risk||1;$('rr').value=2.5;$('pnl').value=0;renderAddChecklist();renderMistakeGrid();updateTimingGuide();clearScreenshot();render();openTrade(t.id)};
+['calcBalance','calcRisk','calcEntry','calcStop','calcTp','calcLeverage','calcSpread','calcCommission','calcPipSize','calcContract','calcPointValue','calcConversion','calcDirection'].forEach(id=>$(id)?.addEventListener('input',()=>{saveCalcState();}));
+$('calcSymbol')?.addEventListener('change',()=>{applyCalcPreset();calculateLotSize()});
+
 render();renderCalendar();
 </script>
 <!-- CLOUD SYNC UI -->
