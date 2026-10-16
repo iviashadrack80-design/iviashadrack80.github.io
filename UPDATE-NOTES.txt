@@ -1,0 +1,7 @@
+ShadrackTrades update
+- Added major forex pairs and common indices to the new-trade form, edit form, and trade-log filter.
+- Trade Log now sorts newest-recorded trades first.
+- New and edited trades store createdAt/updatedAt timestamps for stable ordering and conflict resolution.
+- Cloud loading merges local and cloud trades by ID rather than replacing one side, and sync no longer deletes cloud-only trades just because a device cache is incomplete.
+- Existing Supabase config and login UI were preserved. The project URL has not been verified against your Supabase dashboard, so sign-in/sync still needs a real-device test.
+- Lot-size calculator intentionally not added.
