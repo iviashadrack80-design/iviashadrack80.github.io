@@ -191,12 +191,9 @@ function renderLog(){
   if(monthSelect&&!monthSelect.value)monthSelect.value=String(today.getMonth()+1);
   const selectedYear=yearSelect?.value||String(today.getFullYear());
   if(yearSelect){
-    const years=new Set([String(today.getFullYear()),...trades.map(t=>String(t.date||'').slice(0,4)).filter(y=>/^\d{4}$/.test(y))]);
-    const sortedYears=[...years].sort((a,b)=>Number(b)-Number(a));
-    if(!sortedYears.includes(selectedYear))sortedYears.push(selectedYear);
-    const finalYears=[...new Set(sortedYears)].sort((a,b)=>Number(b)-Number(a));
+    const finalYears=Array.from({length:2100-2026+1},(_,i)=>String(2026+i));
     yearSelect.innerHTML=finalYears.map(y=>`<option value="${esc(y)}">${esc(y)}</option>`).join('');
-    yearSelect.value=finalYears.includes(selectedYear)?selectedYear:String(today.getFullYear());
+    yearSelect.value=finalYears.includes(selectedYear)?selectedYear:'2026';
   }
   let fp=$('fp').value,fr=$('fr').value;
   const selectedMonth=Number(monthSelect?.value||today.getMonth()+1), selectedYearNum=Number(yearSelect?.value||today.getFullYear());
@@ -280,20 +277,34 @@ function monthWeeks(month){
   const [yy,mm]=month.split('-').map(Number);
   const first=new Date(yy,mm-1,1);
   const last=new Date(yy,mm,0);
-  // Week buckets follow calendar workweeks (Monday-Friday), never weekends.
-  // Keep the dates inside the selected month and show four dashboard weeks.
-  const firstMonday=new Date(first);
-  const offset=(firstMonday.getDay()+6)%7;
-  firstMonday.setDate(firstMonday.getDate()-offset);
+  // Week 1 starts on the first of the month and ends on the Friday
+  // of the first complete Monday-Friday workweek in that month.
+  // Following weeks are Monday-Friday; weekends are excluded.
+  const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   const weeks=[];
-  for(let i=0;i<4;i++){
-    const mon=new Date(firstMonday); mon.setDate(firstMonday.getDate()+i*7);
-    const fri=new Date(mon); fri.setDate(mon.getDate()+4);
-    const start=new Date(Math.max(mon.getTime(),first.getTime()));
-    const end=new Date(Math.min(fri.getTime(),last.getTime()));
-    if(start>end) continue;
-    const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    weeks.push({label:`Week ${i+1}`,start:iso(start),end:iso(end)});
+  const firstMonday=new Date(first);
+  firstMonday.setDate(first.getDate()+((8-first.getDay())%7 || 0));
+  // JavaScript Sunday=0: move forward to the first Monday on/after day 1.
+  if(first.getDay()===0) firstMonday.setDate(first.getDate()+1);
+  const firstFriday=new Date(firstMonday);
+  firstFriday.setDate(firstMonday.getDate()+4);
+  let start=new Date(first);
+  let end=new Date(Math.min(firstFriday.getTime(),last.getTime()));
+  weeks.push({label:'Week 1',start:iso(start),end:iso(end)});
+  start=new Date(firstFriday);
+  start.setDate(firstFriday.getDate()+3); // following Monday
+  let weekNo=2;
+  while(start<=last){
+    end=new Date(start);
+    end.setDate(start.getDate()+4);
+    if(end>last) end=new Date(last);
+    // If month ends on a weekend, show the final Friday instead.
+    if(end.getDay()===6) end.setDate(end.getDate()-1);
+    if(end.getDay()===0) end.setDate(end.getDate()-2);
+    if(start<=end) weeks.push({label:`Week ${weekNo}`,start:iso(start),end:iso(end)});
+    start=new Date(start);
+    start.setDate(start.getDate()+7);
+    weekNo++;
   }
   return weeks;
 }
