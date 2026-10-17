@@ -18,13 +18,13 @@ body.theme-light{--bg:#f4f7fb;--panel:#ffffff;--panel2:#f0f4f9;--line:#d4ddea;--
 <div class="row dashboard-main-row"><div class="dashboard-left"><div class="panel"><h3>Equity Curve</h3><div class="muted" style="margin:-6px 0 10px">Your account balance from starting capital → after every completed trade. The curve compounds naturally as equity rises or falls.</div><div class="chartbox"><canvas id="equity"></canvas></div></div><div class="panel performance-panel"><h3>Performance</h3><div class="muted" style="margin:-6px 0 12px">Account performance based on your recorded trades.</div><div class="performance-grid"><div class="stat"><div class="label">STARTING BALANCE</div><div class="value" id="startView">$0.00</div></div><div class="stat"><div class="label">CURRENT EQUITY</div><div class="value" id="balView">$0.00</div></div><div class="stat"><div class="label">NET P&amp;L</div><div class="value" id="perfPnl">$0.00</div></div><div class="stat"><div class="label">HIGHEST EQUITY</div><div class="value" id="highestView">$0.00</div></div><div class="stat"><div class="label">MAX DRAWDOWN</div><div class="value" id="maxDdView">-$0.00</div></div><div class="stat"><div class="label">MAX DRAWDOWN %</div><div class="value" id="maxDdPctView">0.00%</div></div><div class="stat"><div class="label">NET RETURN</div><div class="value" id="returnView">0.00%</div></div><div class="stat"><div class="label">RISK / TRADE</div><div class="value" id="riskView">0.00%</div></div></div></div></div><div class="panel weekly-performance"><div class="weekly-head"><div><h3>Weekly Performance</h3><div class="muted">P&amp;L and number of trades taken for each week of the selected month.</div></div><div class="filters"><button type="button" onclick="changeWeeklyMonth(-1)">‹</button><input id="weeklyMonth" type="month" onchange="renderWeeklyPerformance()" style="width:160px"><button type="button" onclick="changeWeeklyMonth(1)">›</button></div></div><div id="weeklyCards" class="weekcards"></div></div></div>
 <div class="row3 dashboard-breakdowns"><div class="panel"><h3>By Instrument</h3><div id="byPair"></div></div><div class="panel"><h3>By Session</h3><div id="bySession"></div></div><div class="panel"><h3>Discipline</h3><div class="kpi"><span>Rules followed</span><b id="discipline">0%</b></div><div class="progress"><i id="discBar" style="width:0%"></i></div><p class="muted">A losing trade can still be a good execution if your rules were respected.</p></div></div></section>
 
-<section id="add" class="page"><div class="panel"><h2>Record New Trade</h2><form id="form"><div class="formgrid"><div><label>DATE</label><input id="date" type="date" required></div><div><label>INSTRUMENT</label><select id="pair"><option value="US30">US30</option><option value="XAUUSD (Gold)">XAUUSD (Gold)</option><option value="EURUSD">EURUSD</option><option value="GBPUSD">GBPUSD</option><option value="USDJPY">USDJPY</option><option value="USDCHF">USDCHF</option><option value="USDCAD">USDCAD</option><option value="AUDUSD">AUDUSD</option><option value="NZDUSD">NZDUSD</option><option value="NAS100">NASDAQ (NAS100)</option><option value="GER40">German 40 (GER40)</option></select></div><div><label>DIRECTION</label><select id="dir"><option>Buy</option><option>Sell</option></select></div><div><label>SESSION / STRATEGY</label><select id="session" onchange="updateTimingGuide()"><option>Asia</option><option>London</option><option>New York</option></select><div id="timingGuide" class="timing-note"></div></div><div><label>ENTRY TIME</label><input id="entryTime" type="time" onchange="updateTimingGuide()"><div id="timingStatus" class="timing-status timing-neutral"></div></div><div><label>SETUP QUALITY</label><select id="setupQuality"><option value="A+">A+</option><option value="A">A</option><option value="B">B</option><option value="C">C</option></select><div class="timing-note">A+ = complete valid setup; A = strong setup; B/C = increasing imperfections or rule deviations.</div></div><div><label>CRT TIMEFRAME</label><select id="crt"><option>4H CRT</option><option>1H CRT</option><option>Daily CRT</option><option>Other</option></select></div><div><label>LIQUIDITY</label><select id="liq"><option>BSL Sweep</option><option>SSL Sweep</option><option>Both / Inducement</option><option>None</option></select></div><div><label>CONFIRMATION</label><select id="confirm"><option>MSS / CHOCH</option><option>CISD</option><option>FVG</option><option>iFVG</option><option>OB Retest</option><option>Multiple</option></select></div><div><label>RISK %</label><input id="risk" type="number" step=".01" value="1"></div><div><label>R (RRR OF TRADE)</label><input id="rr" type="number" step=".1" value="2.5"><div class="timing-note">Enter the planned R multiple. Example: 2.5 means +2.5R if the trade wins.</div></div><div><label>RESULT</label><select id="result"><option>Win</option><option>Loss</option><option>BE</option></select></div><div><label>P/L ($)</label><input id="pnl" type="number" step=".01" value="0"></div><div class="full"><label>ENTRY / EXIT</label><div class="entry-grid">
+<section id="add" class="page"><div class="panel"><h2>Record New Trade</h2><form id="form"><div class="formgrid"><div><label>DATE</label><input id="date" type="date" required></div><div><label>INSTRUMENT</label><select id="pair"><option>US30</option><option>XAUUSD (Gold)</option></select></div><div><label>DIRECTION</label><select id="dir"><option>Buy</option><option>Sell</option></select></div><div><label>SESSION / STRATEGY</label><select id="session" onchange="updateTimingGuide()"><option>Asia</option><option>London</option><option>New York</option></select><div id="timingGuide" class="timing-note"></div></div><div><label>ENTRY TIME</label><input id="entryTime" type="time" onchange="updateTimingGuide()"><div id="timingStatus" class="timing-status timing-neutral"></div></div><div><label>SETUP QUALITY</label><select id="setupQuality"><option value="A+">A+</option><option value="A">A</option><option value="B">B</option><option value="C">C</option></select><div class="timing-note">A+ = complete valid setup; A = strong setup; B/C = increasing imperfections or rule deviations.</div></div><div><label>CRT TIMEFRAME</label><select id="crt"><option>4H CRT</option><option>1H CRT</option><option>Daily CRT</option><option>Other</option></select></div><div><label>LIQUIDITY</label><select id="liq"><option>BSL Sweep</option><option>SSL Sweep</option><option>Both / Inducement</option><option>None</option></select></div><div><label>CONFIRMATION</label><select id="confirm"><option>MSS / CHOCH</option><option>CISD</option><option>FVG</option><option>iFVG</option><option>OB Retest</option><option>Multiple</option></select></div><div><label>RISK %</label><input id="risk" type="number" step=".01" value="1"></div><div><label>R (RRR OF TRADE)</label><input id="rr" type="number" step=".1" value="2.5"><div class="timing-note">Enter the planned R multiple. Example: 2.5 means +2.5R if the trade wins.</div></div><div><label>RESULT</label><select id="result"><option>Win</option><option>Loss</option><option>BE</option></select></div><div><label>P/L ($)</label><input id="pnl" type="number" step=".01" value="0"></div><div class="full"><label>ENTRY / EXIT</label><div class="entry-grid">
 <div><label class="sub-label">ENTRY PRICE</label><input id="entry" type="number" step="any" placeholder="Where you entered"></div>
 <div><label class="sub-label">EXIT PRICE</label><input id="exit" type="number" step="any" placeholder="Where you exited"></div>
 <div><label class="sub-label">STOP LOSS (SL)</label><input id="sl" type="number" step="any" placeholder="Your stop loss"></div>
 </div></div><div class="full"><label>TRADING PLAN — WHY I TOOK THIS TRADE</label><textarea id="plan" placeholder="Explain your trading plan and the reason you took this trade..."></textarea></div><div class="full"><label>BIAS</label><div class="quality-grid"><label class="quality-option"><input type="radio" name="bias" value="Bullish" checked> Bullish</label><label class="quality-option"><input type="radio" name="bias" value="Bearish"> Bearish</label><label class="quality-option"><input type="radio" name="bias" value="Ranging"> Ranging</label></div></div><div class="full"><label>SETUP CHECKLIST — MARK EACH RULE HONESTLY</label><div class="checkgrid" id="addChecklist"></div></div><div class="full"><label>MISTAKE TRACKER — SELECT ANY THAT APPLIED</label><div class="mistake-grid" id="mistakeGrid"></div></div><div class="full"><label>TRADE SCREENSHOT</label><div class="uploadbox"><input id="screenshot" type="file" accept="image/*" hidden><button type="button" class="uploadbtn" onclick="document.getElementById('screenshot').click()">📷 Choose Trade Screenshot</button><span id="fileName" class="muted">PNG, JPG or WEBP</span><div id="previewWrap" class="previewwrap" style="display:none"><img id="preview" alt="Trade screenshot preview"><button type="button" class="removeimg" onclick="clearScreenshot()">Remove</button></div></div></div><div class="full"><button class="primary" type="submit">Save Trade & Open Review</button></div></div></form></div></section>
 
-<section id="trades" class="page"><div class="panel"><h2>Trade Log</h2><div class="filters"><select id="fp" onchange="renderLog()"><option value="">All instruments</option><option value="US30">US30</option><option value="XAUUSD (Gold)">XAUUSD (Gold)</option><option value="EURUSD">EURUSD</option><option value="GBPUSD">GBPUSD</option><option value="USDJPY">USDJPY</option><option value="USDCHF">USDCHF</option><option value="USDCAD">USDCAD</option><option value="AUDUSD">AUDUSD</option><option value="NZDUSD">NZDUSD</option><option value="NAS100">NASDAQ (NAS100)</option><option value="GER40">German 40 (GER40)</option></select><select id="fr" onchange="renderLog()"><option value="">All results</option><option>Win</option><option>Loss</option><option>BE</option></select><button onclick="exportCSV()">Export CSV</button></div><table><thead><tr><th>Date</th><th>Instrument</th><th>Side</th><th>Session</th><th>Result</th><th>Quality</th><th>Timing</th><th>R (RRR)</th><th>P/L</th><th>Rules</th><th>Screenshot</th><th></th></tr></thead><tbody id="log"></tbody></table></div></section>
+<section id="trades" class="page"><div class="panel"><h2>Trade Log</h2><div class="filters"><select id="fp" onchange="renderLog()"><option value="">All instruments</option><option>US30</option><option>XAUUSD (Gold)</option></select><select id="fr" onchange="renderLog()"><option value="">All results</option><option>Win</option><option>Loss</option><option>BE</option></select><button onclick="exportCSV()">Export CSV</button></div><table><thead><tr><th>Date</th><th>Instrument</th><th>Side</th><th>Session</th><th>Result</th><th>Quality</th><th>Timing</th><th>R (RRR)</th><th>P/L</th><th>Rules</th><th>Screenshot</th><th></th></tr></thead><tbody id="log"></tbody></table></div></section>
 
 <section id="calendar" class="page"><div class="panel"><div class="calendar-head"><div><h2>Trade Calendar</h2><div class="muted">Click a day to see every trade recorded on that date.</div></div><div><button onclick="changeMonth(-1)">‹</button> <button onclick="goToday()">Today</button> <button onclick="changeMonth(1)">›</button></div></div><h3 id="calMonth"></h3><div class="calendar" id="calendarGrid"></div><div class="note">🟢 Positive day &nbsp; 🔴 Negative day &nbsp; ⚪ No trades</div></div></section>
 
@@ -48,7 +48,7 @@ body.theme-light{--bg:#f4f7fb;--panel:#ffffff;--panel2:#f0f4f9;--line:#d4ddea;--
     <form id="editTradeForm" class="formgrid" style="margin-top:14px">
       <input id="editId" type="hidden">
       <div><label>DATE</label><input id="editDate" type="date"></div>
-      <div><label>INSTRUMENT</label><select id="editPair"><option>US30</option><option>XAUUSD (Gold)</option><option>EURUSD</option><option>GBPUSD</option><option>USDJPY</option><option>USDCHF</option><option>AUDUSD</option><option>USDCAD</option><option>NZDUSD</option><option>NAS100</option><option>US500</option><option>GER40</option><option>UK100</option><option>JP225</option><option>HK50</option><option>AUS200</option><option>EU50</option><option>FRA40</option></select></div>
+      <div><label>INSTRUMENT</label><select id="editPair"><option>US30</option><option>XAUUSD (Gold)</option></select></div>
       <div><label>SIDE</label><select id="editDir"><option>Buy</option><option>Sell</option></select></div>
       <div><label>SESSION</label><select id="editSession"><option>Asia</option><option>London</option><option>New York</option></select></div>
       <div><label>ENTRY TIME</label><input id="editEntryTime" type="time"></div>
@@ -107,66 +107,15 @@ let syncTimer=null;function queueCloudSync(){clearTimeout(syncTimer);syncTimer=s
 function setCloudStatus(text,ok=false,err=false){if($('cloudStatus'))$('cloudStatus').textContent=text;if($('cloudDot'))$('cloudDot').className='cloud-dot '+(ok?'ok':err?'err':'');if($('cloudAuthBtn'))$('cloudAuthBtn').textContent=cloudUser?'Account':'Sign in'}
 function showAuthMsg(msg){if($('authMsg'))$('authMsg').textContent=msg}
 function openAuth(){if($('authModal'))$('authModal').classList.add('open')}
-function closeAuth(){if(!cloudUser){showAuthMsg('Please sign in with your journal email and password to continue.');return}if($('authModal'))$('authModal').classList.remove('open')}
+function closeAuth(){if($('authModal'))$('authModal').classList.remove('open')}
 function configuredSupabase(){return typeof SUPABASE_URL==='string'&&SUPABASE_URL.startsWith('http')&&typeof SUPABASE_ANON_KEY==='string'&&SUPABASE_ANON_KEY.length>20&&window.supabase}
-async function initCloud(){if(!configuredSupabase()){setCloudStatus('Local mode');return}try{cloud=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);const {data:{session}}=await cloud.auth.getSession();if(session){cloudUser=session.user;await loadCloud()}else{setCloudStatus('Please sign in to sync');openAuth()}cloud.auth.onAuthStateChange(async(_event,session)=>{cloudUser=session?.user||null;if(cloudUser){await loadCloud()}else{cloudReady=false;setCloudStatus('Signed out')}})}catch(e){console.error(e);setCloudStatus('Cloud error',false,true)}}
+async function initCloud(){if(!configuredSupabase()){setCloudStatus('Local mode');return}try{cloud=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);const {data:{session}}=await cloud.auth.getSession();if(session){cloudUser=session.user;await loadCloud()}else setCloudStatus('Cloud ready');cloud.auth.onAuthStateChange(async(_event,session)=>{cloudUser=session?.user||null;if(cloudUser){await loadCloud()}else{cloudReady=false;setCloudStatus('Signed out')}})}catch(e){console.error(e);setCloudStatus('Cloud error',false,true)}}
 async function signInCloud(){if(!configuredSupabase()){showAuthMsg('Add your Supabase URL and publishable key to supabase-config.js first.');return}const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password){showAuthMsg('Enter email and password.');return}showAuthMsg('Signing in…');const {error}=await cloud.auth.signInWithPassword({email,password});showAuthMsg(error?error.message:'Signed in. Loading your journal…')}
 async function signUpCloud(){if(!configuredSupabase()){showAuthMsg('Add your Supabase URL and publishable key to supabase-config.js first.');return}const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||password.length<6){showAuthMsg('Enter a valid email and a password of at least 6 characters.');return}showAuthMsg('Creating account…');const {error}=await cloud.auth.signUp({email,password});showAuthMsg(error?error.message:'Account created. Check your email if confirmation is enabled.')}
 async function signOutCloud(){if(cloud)await cloud.auth.signOut();closeAuth()}
 function localSnapshot(){return{trades,acc,reviews}}
-let cloudRefreshTimer=null;
-async function fetchCloudRows(){
-  if(!cloud||!cloudUser) return null;
-  const [{data:ts,error:te},{data:rs,error:re},{data:ss,error:se}]=await Promise.all([
-    cloud.from(CLOUD_TABLES.trades).select('id,data').eq('user_id',cloudUser.id),
-    cloud.from(CLOUD_TABLES.reviews).select('key,data').eq('user_id',cloudUser.id),
-    cloud.from(CLOUD_TABLES.settings).select('data').eq('user_id',cloudUser.id).maybeSingle()
-  ]);
-  if(te||re||se) throw te||re||se;
-  return {ts:ts||[],rs:rs||[],ss};
-}
-function saveLocalSnapshot(){
-  localStorage.setItem('crtProTrades',JSON.stringify(trades));
-  localStorage.setItem('crtProReviews',JSON.stringify(reviews));
-  localStorage.setItem('crtProAccount',JSON.stringify(acc));
-}
-async function loadCloud(){
-  if(!cloud||!cloudUser)return;
-  cloudReady=false; setCloudStatus('Loading cloud…');
-  try{
-    const remote=await fetchCloudRows();
-    // Initial migration only: if the cloud has no trades yet, upload this device's
-    // local records. Once cloud records exist, Supabase is authoritative so a stale
-    // phone/laptop cache cannot resurrect deleted trades or overwrite newer records.
-    if(remote.ts.length===0 && trades.length){
-      cloudReady=true;
-      await syncCloud();
-      const after=await fetchCloudRows();
-      trades=after.ts.filter(x=>x?.data).map(x=>normalizeTrade({...x.data,id:x.data.id??x.id}));
-      reviews=after.rs.length?Object.fromEntries(after.rs.map(x=>[x.key,x.data])):reviews;
-      if(after.ss?.data){acc=after.ss.data.account||acc;if(after.ss.data.appearance){localStorage.setItem(APPEARANCE_KEY,JSON.stringify(after.ss.data.appearance));applyAppearance()}}
-    }else{
-      trades=remote.ts.filter(x=>x?.data).map(x=>normalizeTrade({...x.data,id:x.data.id??x.id}));
-      // Cloud is authoritative after initial migration; retain local reviews only if cloud has none.
-      if(remote.rs.length) reviews=Object.fromEntries(remote.rs.map(x=>[x.key,x.data]));
-      if(remote.ss?.data){acc=remote.ss.data.account||acc;if(remote.ss.data.appearance){localStorage.setItem(APPEARANCE_KEY,JSON.stringify(remote.ss.data.appearance));applyAppearance()}}
-    }
-    saveLocalSnapshot(); cloudReady=true; setCloudStatus('Synced',true); closeAuth();
-    render();renderCalendar();renderWeeklyPerformance();startCloudRefresh();
-  }catch(e){console.error(e);setCloudStatus('Cloud error',false,true);showAuthMsg('Cloud load failed: '+(e.message||e))}
-}
-async function refreshCloudOnly(){
-  if(!cloud||!cloudUser||cloudBusy||!cloudReady)return;
-  try{
-    const remote=await fetchCloudRows();
-    trades=remote.ts.filter(x=>x?.data).map(x=>normalizeTrade({...x.data,id:x.data.id??x.id}));
-    if(remote.rs.length) reviews=Object.fromEntries(remote.rs.map(x=>[x.key,x.data]));
-    if(remote.ss?.data){acc=remote.ss.data.account||acc;if(remote.ss.data.appearance){localStorage.setItem(APPEARANCE_KEY,JSON.stringify(remote.ss.data.appearance));applyAppearance()}}
-    saveLocalSnapshot(); setCloudStatus('Synced',true); render();renderCalendar();renderWeeklyPerformance();
-  }catch(e){console.error(e);setCloudStatus('Refresh error',false,true)}
-}
-function startCloudRefresh(){if(cloudRefreshTimer)clearInterval(cloudRefreshTimer);cloudRefreshTimer=setInterval(refreshCloudOnly,5000)}
-async function syncCloud(){if(!cloud||!cloudUser||cloudBusy)return;cloudBusy=true;setCloudStatus('Syncing…');try{const user_id=cloudUser.id;for(const t of trades){const {error}=await cloud.from(CLOUD_TABLES.trades).upsert({id:String(t.id),user_id,data:t},{onConflict:'id,user_id'});if(error)throw error}const reviewRows=Object.entries(reviews).map(([key,data])=>({user_id,key,data}));if(reviewRows.length){const {error}=await cloud.from(CLOUD_TABLES.reviews).upsert(reviewRows,{onConflict:'user_id,key'});if(error)throw error}const {error:se}=await cloud.from(CLOUD_TABLES.settings).upsert({user_id,data:{account:acc,appearance:getAppearance()}},{onConflict:'user_id'});if(se)throw se;cloudReady=true;setCloudStatus('Synced',true)}finally{cloudBusy=false}}
+async function loadCloud(){if(!cloud||!cloudUser)return;setCloudStatus('Loading cloud…');try{const [{data:ts,error:te},{data:rs,error:re},{data:ss,error:se}]=await Promise.all([cloud.from(CLOUD_TABLES.trades).select('id,data').eq('user_id',cloudUser.id),cloud.from(CLOUD_TABLES.reviews).select('key,data').eq('user_id',cloudUser.id),cloud.from(CLOUD_TABLES.settings).select('data').eq('user_id',cloudUser.id).maybeSingle()]);if(te||re||se)throw te||re||se;const hasLocal=trades.length||Object.keys(reviews).length||localStorage.getItem('crtProAccount');if((ts?.length||rs?.length||ss?.data)&&hasLocal){const local=localSnapshot();if(ts?.length)trades=ts.map(x=>normalizeTrade(x.data));if(rs?.length)reviews=Object.fromEntries(rs.map(x=>[x.key,x.data]));if(ss?.data){acc=ss.data.account||acc;if(ss.data.appearance){localStorage.setItem(APPEARANCE_KEY,JSON.stringify(ss.data.appearance));applyAppearance()}}localStorage.setItem('crtProTrades',JSON.stringify(trades));localStorage.setItem('crtProReviews',JSON.stringify(reviews));localStorage.setItem('crtProAccount',JSON.stringify(acc));}else if(hasLocal){await syncCloud();}else{trades=(ts||[]).map(x=>normalizeTrade(x.data));reviews=Object.fromEntries((rs||[]).map(x=>[x.key,x.data]));acc=ss?.data?.account||acc;if(ss?.data?.appearance){localStorage.setItem(APPEARANCE_KEY,JSON.stringify(ss.data.appearance));applyAppearance()}localStorage.setItem('crtProTrades',JSON.stringify(trades));localStorage.setItem('crtProReviews',JSON.stringify(reviews));localStorage.setItem('crtProAccount',JSON.stringify(acc))}cloudReady=true;setCloudStatus('Synced',true);render();renderCalendar();renderWeeklyPerformance();}catch(e){console.error(e);setCloudStatus('Cloud error',false,true);showAuthMsg('Cloud load failed: '+(e.message||e))}}
+async function syncCloud(){if(!cloud||!cloudUser||cloudBusy)return;cloudBusy=true;setCloudStatus('Syncing…');try{const user_id=cloudUser.id;for(const t of trades){const {error}=await cloud.from(CLOUD_TABLES.trades).upsert({id:String(t.id),user_id,data:t},{onConflict:'id,user_id'});if(error)throw error}const reviewRows=Object.entries(reviews).map(([key,data])=>({user_id,key,data}));if(reviewRows.length){const {error}=await cloud.from(CLOUD_TABLES.reviews).upsert(reviewRows,{onConflict:'user_id,key'});if(error)throw error}const {data:remoteTrades,error:re}=await cloud.from(CLOUD_TABLES.trades).select('id').eq('user_id',user_id);if(re)throw re;const localIds=new Set(trades.map(t=>String(t.id)));const stale=(remoteTrades||[]).map(x=>String(x.id)).filter(id=>!localIds.has(id));if(stale.length){const {error:de}=await cloud.from(CLOUD_TABLES.trades).delete().eq('user_id',user_id).in('id',stale);if(de)throw de}const {error:se}=await cloud.from(CLOUD_TABLES.settings).upsert({user_id,data:{account:acc,appearance:getAppearance()}},{onConflict:'user_id'});if(se)throw se;cloudReady=true;setCloudStatus('Synced',true)}finally{cloudBusy=false}}
 async function syncNow(){if(!cloudUser){showAuthMsg('Sign in first.');return}showAuthMsg('Syncing local journal to cloud…');try{await syncCloud();showAuthMsg('Synced. Your journal is now available on other devices when you sign in.')}catch(e){showAuthMsg('Sync failed: '+(e.message||e))}}
 function page(id,btn){let target=$(id);if(!target)return;document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));target.classList.add('active');document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));if(btn)btn.classList.add('active');let titles={dashboard:'Trading Dashboard',add:'Record Trade',trades:'Trade Log',calendar:'Trade Calendar',analytics:'Analytics',daily:'Daily Review',weekly:'Weekly Review',monthly:'Monthly Review',account:'Account Settings',tradeDetail:'Trade Review',settings:'Journal Settings'};if($('title'))$('title').textContent=titles[id]||'Trading Journal';render();if(id==='daily')renderDaily();if(id==='weekly')renderWeekly();if(id==='monthly')renderMonthly();if(id==='calendar')renderCalendar()}
 function timingGuide(session){if(session==='Asia')return 'Kenya time: mark the most recent 15m high/low during 2:00–3:00 AM. Valid sweep/entry window: 2:00–5:00 AM EAT.';if(session==='New York')return 'New York time: use the 8:00 AM 1H candle high/low. Do not enter before 9:30 AM. Stop taking this setup after 11:30 AM.';return 'London timing guide not configured yet.'}
@@ -177,16 +126,8 @@ function selectedMistakes(){return MISTAKES.filter((_,i)=>$('mistake'+i)?.checke
 function renderAddChecklist(){$('addChecklist').innerHTML=RULES.map((r,i)=>`<div class="check"><label>${esc(r)}</label><input id="rule${i}" type="checkbox" style="width:auto"></div>`).join('')}
 function render(){if($('weeklyMonth'))renderWeeklyPerformance();let s=stats();$('n').textContent=s.n;$('wr').textContent=s.wr.toFixed(1)+'%';$('nr').textContent=s.r.toFixed(2)+'R';$('pl').textContent=(s.p<0?'-':'')+'$'+Math.abs(s.p).toFixed(2);$('pl').className='value '+(s.p>=0?'green':'red');$('discipline').textContent=s.adherence.toFixed(0)+'%';$('disciplineTop').textContent=s.adherence.toFixed(0)+'%';$('discBar').style.width=Math.min(100,s.adherence)+'%';renderBreak('byPair','pair');renderBreak('bySession','session');renderLog();renderAnalytics();renderEquity();renderAccount();let em=equityMetrics();$('startView').textContent='$'+em.start.toFixed(2);$('balView').textContent='$'+em.current.toFixed(2);$('perfPnl').textContent=(em.net<0?'-':'')+'$'+Math.abs(em.net).toFixed(2);$('perfPnl').className=em.net>=0?'green':'red';$('highestView').textContent='$'+em.highest.toFixed(2);$('maxDdView').textContent='-$'+em.maxDd.toFixed(2);$('maxDdView').className=em.maxDd>0?'red':'';$('maxDdPctView').textContent=em.maxDdPct.toFixed(2)+'%';$('returnView').textContent=(num(acc.start)?em.net/num(acc.start)*100:0).toFixed(2)+'%';$('riskView').textContent=num(acc.risk,1)+'%'}
 function renderBreak(el,key){let g={};trades.forEach(t=>(g[t[key]]??=[]).push(t));$(el).innerHTML=Object.entries(g).map(([k,a])=>{let s=stats(a);return`<div class="kpi"><span>${esc(k)}</span><b>${s.r.toFixed(2)}R • ${s.wr.toFixed(0)}%</b></div>`}).join('')||'<div class="empty">No trades yet</div>'}
-function tradeOrderValue(t){
-  const created = Number(t.createdAt || t.created_at || t.id || 0);
-  return Number.isFinite(created) ? created : 0;
-}
-function newestFirst(list){
-  return [...list].sort((a,b)=>tradeOrderValue(b)-tradeOrderValue(a) ||
-    String(b.date||'').localeCompare(String(a.date||'')));
-}
 function renderLog(){
-  let fp=$('fp').value,fr=$('fr').value,a=newestFirst(trades.filter(t=>(!fp||t.pair===fp)&&(!fr||t.result===fr)));
+  let fp=$('fp').value,fr=$('fr').value,a=trades.filter(t=>(!fp||t.pair===fp)&&(!fr||t.result===fr));
   $('log').innerHTML=a.map(t=>`<tr>
     <td>${esc(t.date)}</td><td><b>${esc(t.pair)}</b></td><td><span class="badge">${esc((t.dir==='Long'||t.dir==='long')?'Buy':(t.dir==='Short'||t.dir==='short')?'Sell':(t.dir||t.direction||'—'))}</span></td><td>${esc(t.session)}</td>
     <td><span class="${t.result==='Loss'?'red':t.result==='Win'?'green':''}">${esc(t.result)}</span></td>
@@ -261,22 +202,13 @@ function renderEquity(){
 }
 function monthWeeks(month){
   const [yy,mm]=month.split('-').map(Number);
-  const first=new Date(yy,mm-1,1);
-  const last=new Date(yy,mm,0);
-  // Week buckets follow calendar workweeks (Monday-Friday), never weekends.
-  // Keep the dates inside the selected month and show four dashboard weeks.
-  const firstMonday=new Date(first);
-  const offset=(firstMonday.getDay()+6)%7;
-  firstMonday.setDate(firstMonday.getDate()-offset);
+  const last=new Date(yy,mm,0).getDate();
   const weeks=[];
   for(let i=0;i<4;i++){
-    const mon=new Date(firstMonday); mon.setDate(firstMonday.getDate()+i*7);
-    const fri=new Date(mon); fri.setDate(mon.getDate()+4);
-    const start=new Date(Math.max(mon.getTime(),first.getTime()));
-    const end=new Date(Math.min(fri.getTime(),last.getTime()));
-    if(start>end) continue;
-    const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    weeks.push({label:`Week ${i+1}`,start:iso(start),end:iso(end)});
+    const from=i*7+1;
+    if(from>last) break;
+    const to=Math.min(from+6,last);
+    weeks.push({label:`Week ${i+1}`,start:`${month}-${String(from).padStart(2,'0')}`,end:`${month}-${String(to).padStart(2,'0')}`});
   }
   return weeks;
 }
@@ -287,7 +219,7 @@ function renderWeeklyPerformance(){
   if(input) input.value=month;
   const weeks=monthWeeks(month);
   $('weeklyCards').innerHTML=weeks.map(w=>{
-    const a=trades.filter(t=>{if(!(t.date>=w.start && t.date<=w.end))return false;const d=new Date(t.date+'T00:00:00').getDay();return d!==0&&d!==6;});
+    const a=trades.filter(t=>t.date>=w.start && t.date<=w.end);
     const pnl=a.reduce((sum,t)=>sum+signedPnl(t),0);
     const cls=pnl>0?'positive':pnl<0?'negative':'emptyweek';
     const pnlClass=pnl>0?'green':pnl<0?'red':'';
@@ -391,7 +323,7 @@ $('editTradeForm').onsubmit=e=>{
   const i=trades.findIndex(x=>String(x.id)===String($('editId').value));
   if(i<0)return;
   const old=trades[i], result=$('editResult').value;
-  trades[i]={...old,updatedAt:Date.now(),
+  trades[i]={...old,
     date:$('editDate').value,pair:$('editPair').value,dir:$('editDir').value==='Long'?'Buy':$('editDir').value==='Short'?'Sell':$('editDir').value,session:$('editSession').value,
     entryTime:$('editEntryTime').value,setupQuality:$('editQuality').value,risk:num($('editRisk').value,acc.risk||1),
     rr:num($('editRR').value,2.5),result,pnl:result==='Loss'?-Math.abs(num($('editPnl').value)):result==='Win'?Math.abs(num($('editPnl').value)):0,
@@ -473,7 +405,7 @@ $('date').value=isoToday();document.querySelector('input[name="bias"][value="Bul
 $('screenshot').onchange=async()=>{let f=$('screenshot').files[0];if(!f)return;$('fileName').textContent=f.name;try{pendingScreenshot=await compressImage(f);$('preview').src=pendingScreenshot;$('previewWrap').style.display='block'}catch(e){alert('Could not load that image.');clearScreenshot()}};
 function compressImage(file,maxSize=1400,quality=.68){return new Promise((resolve,reject)=>{let r=new FileReader();r.onload=()=>{let img=new Image();img.onload=()=>{let scale=Math.min(1,maxSize/Math.max(img.width,img.height)),w=Math.max(1,Math.round(img.width*scale)),h=Math.max(1,Math.round(img.height*scale)),c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);resolve(c.toDataURL('image/jpeg',quality))};img.onerror=reject;img.src=r.result};r.onerror=reject;r.readAsDataURL(file)})}
 function clearScreenshot(){pendingScreenshot='';$('screenshot').value='';$('fileName').textContent='PNG, JPG or WEBP';$('preview').src='';$('previewWrap').style.display='none'}
-$('form').onsubmit=e=>{e.preventDefault();let t={id:Date.now(),createdAt:Date.now(),updatedAt:Date.now(),date:$('date').value,pair:$('pair').value,dir:$('dir').value,session:$('session').value,crt:$('crt').value,liq:$('liq').value,confirm:$('confirm').value,risk:num($('risk').value,acc.risk||1),rr:num($('rr').value,2.5),result:$('result').value,pnl:($('result').value==='Loss'?-Math.abs(num($('pnl').value)):$('result').value==='Win'?Math.abs(num($('pnl').value)):0),entry:$('entry').value,exit:$('exit').value,sl:$('sl').value,details:[`Entry: ${$('entry').value}`,`Exit: ${$('exit').value}`,`SL: ${$('sl').value}`].join(' | '),plan:$('plan').value,bias:document.querySelector('input[name="bias"]:checked')?.value||'Bullish',setupQuality:$('setupQuality').value,entryTime:$('entryTime').value,mistakes:selectedMistakes(),rules:RULES.map((_,i)=>$('rule'+i).checked),screenshot:pendingScreenshot};trades.unshift(t);try{persist()}catch(err){trades.shift();alert('This screenshot is too large for browser storage. Try a smaller screenshot.');return}e.target.reset();document.querySelector('input[name="bias"][value="Bullish"]').checked=true;$('date').value=isoToday();$('risk').value=acc.risk||1;$('rr').value=2.5;$('pnl').value=0;renderAddChecklist();renderMistakeGrid();updateTimingGuide();clearScreenshot();render();openTrade(t.id)};
+$('form').onsubmit=e=>{e.preventDefault();let t={id:Date.now(),date:$('date').value,pair:$('pair').value,dir:$('dir').value,session:$('session').value,crt:$('crt').value,liq:$('liq').value,confirm:$('confirm').value,risk:num($('risk').value,acc.risk||1),rr:num($('rr').value,2.5),result:$('result').value,pnl:($('result').value==='Loss'?-Math.abs(num($('pnl').value)):$('result').value==='Win'?Math.abs(num($('pnl').value)):0),entry:$('entry').value,exit:$('exit').value,sl:$('sl').value,details:[`Entry: ${$('entry').value}`,`Exit: ${$('exit').value}`,`SL: ${$('sl').value}`].join(' | '),plan:$('plan').value,bias:document.querySelector('input[name="bias"]:checked')?.value||'Bullish',setupQuality:$('setupQuality').value,entryTime:$('entryTime').value,mistakes:selectedMistakes(),rules:RULES.map((_,i)=>$('rule'+i).checked),screenshot:pendingScreenshot};trades.unshift(t);try{persist()}catch(err){trades.shift();alert('This screenshot is too large for browser storage. Try a smaller screenshot.');return}e.target.reset();document.querySelector('input[name="bias"][value="Bullish"]').checked=true;$('date').value=isoToday();$('risk').value=acc.risk||1;$('rr').value=2.5;$('pnl').value=0;renderAddChecklist();renderMistakeGrid();updateTimingGuide();clearScreenshot();render();openTrade(t.id)};
 render();renderCalendar();
 </script>
 <!-- CLOUD SYNC UI -->
