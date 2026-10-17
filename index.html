@@ -301,7 +301,7 @@ function monthWeeks(month){
     // remaining calendar date in that month, even weekend dates.
     if(start.getFullYear()===last.getFullYear() &&
        start.getMonth()===last.getMonth() &&
-       start.getDate() + 7 > last.getDate()){
+       start.getDate() + 7 >= last.getDate()){
       end=new Date(last);
     }else{
       end.setDate(start.getDate()+4);
