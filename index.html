@@ -277,9 +277,10 @@ function monthWeeks(month){
   const [yy,mm]=month.split('-').map(Number);
   const first=new Date(yy,mm-1,1);
   const last=new Date(yy,mm,0);
-  // Week 1 starts on the first of the month and ends on the Friday
-  // of the first complete Monday-Friday workweek in that month.
-  // Following weeks are Monday-Friday; weekends are excluded.
+  // Week 1 begins on the first calendar date and ends on the Friday
+  // of the first Monday-Friday trading week. Later weeks start on Monday.
+  // The final week always runs from the month's last Monday through its
+  // actual final calendar date, including Saturday/Sunday when applicable.
   const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   const weeks=[];
   const firstMonday=new Date(first);
@@ -296,11 +297,16 @@ function monthWeeks(month){
   let weekNo=2;
   while(start<=last){
     end=new Date(start);
-    end.setDate(start.getDate()+4);
-    if(end>last) end=new Date(last);
-    // If month ends on a weekend, show the final Friday instead.
-    if(end.getDay()===6) end.setDate(end.getDate()-1);
-    if(end.getDay()===0) end.setDate(end.getDate()-2);
+    // The last Monday of the month begins the final week; include every
+    // remaining calendar date in that month, even weekend dates.
+    if(start.getFullYear()===last.getFullYear() &&
+       start.getMonth()===last.getMonth() &&
+       start.getDate() + 7 > last.getDate()){
+      end=new Date(last);
+    }else{
+      end.setDate(start.getDate()+4);
+      if(end>last) end=new Date(last);
+    }
     if(start<=end) weeks.push({label:`Week ${weekNo}`,start:iso(start),end:iso(end)});
     start=new Date(start);
     start.setDate(start.getDate()+7);
