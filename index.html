@@ -191,7 +191,7 @@ function renderLog(){
   if(monthSelect&&!monthSelect.value)monthSelect.value=String(today.getMonth()+1);
   const selectedYear=yearSelect?.value||String(today.getFullYear());
   if(yearSelect){
-    const years=new Set([String(today.getFullYear()),...trades.map(t=>String(t.date||'').slice(0,4)).filter(y=>/^\\d{4}$/.test(y))]);
+    const years=new Set([String(today.getFullYear()),...trades.map(t=>String(t.date||'').slice(0,4)).filter(y=>/^\d{4}$/.test(y))]);
     const sortedYears=[...years].sort((a,b)=>Number(b)-Number(a));
     if(!sortedYears.includes(selectedYear))sortedYears.push(selectedYear);
     const finalYears=[...new Set(sortedYears)].sort((a,b)=>Number(b)-Number(a));
