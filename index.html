@@ -65,6 +65,7 @@ body.theme-light{--bg:#f4f7fb;--panel:#ffffff;--panel2:#f0f4f9;--line:#d4ddea;--
       <div><label>LIQUIDITY</label><select id="editLiq"><option>BSL Sweep</option><option>SSL Sweep</option><option>Both / Inducement</option><option>None</option></select></div>
       <div><label>CONFIRMATION</label><select id="editConfirm"><option>MSS / CHOCH</option><option>CISD</option><option>FVG</option><option>iFVG</option><option>OB Retest</option><option>Multiple</option></select></div>
       <div class="full"><label>TRADING PLAN</label><textarea id="editPlan" rows="5"></textarea></div>
+      <div class="full"><label>TRADE SCREENSHOT</label><div class="uploadbox"><input id="editScreenshotFile" type="file" accept="image/*" style="display:none"><button type="button" class="uploadbtn" onclick="document.getElementById('editScreenshotFile').click()">📷 Choose / Replace Screenshot</button><span id="editScreenshotStatus" class="muted">Existing screenshot will be kept unless replaced or removed.</span><div id="editScreenshotPreviewWrap" class="previewwrap" style="display:none"><img id="editScreenshotPreview" alt="Trade screenshot preview"><button type="button" class="removeimg" onclick="removeEditScreenshot()">Remove screenshot</button></div></div></div>
       <div class="full"><label>MISTAKES</label><div class="mistake-grid" id="editMistakes"></div></div>
       <div class="full"><label>SETUP CHECKLIST</label><div class="checkgrid" id="editRules"></div></div>
       <div class="full" style="display:flex;justify-content:flex-end;gap:8px"><button type="button" onclick="closeEditTrade()">Cancel</button><button class="primary" type="submit">Save Changes</button></div>
@@ -386,7 +387,7 @@ function openTrade(id){
 }
 
 
-let currentTradeId=null;
+let currentTradeId=null, editPendingScreenshot=null, editRemoveScreenshot=false;
 function editOpenTrade(){
   if(currentTradeId!==null) openEditTrade(currentTradeId);
 }
@@ -413,11 +414,41 @@ function openEditTrade(id){
   $('editLiq').value=t.liq||'BSL Sweep';
   $('editConfirm').value=t.confirm||'MSS / CHOCH';
   $('editPlan').value=t.plan||t.psych||'';
+  editPendingScreenshot=null;
+  editRemoveScreenshot=false;
+  $('editScreenshotFile').value='';
+  $('editScreenshotStatus').textContent=t.screenshot?'Existing screenshot loaded. Choose another to replace it.':'No screenshot saved for this trade.';
+  $('editScreenshotPreviewWrap').style.display=t.screenshot?'block':'none';
+  $('editScreenshotPreview').src=t.screenshot||'';
+  $('editScreenshotPreviewWrap').querySelector('.removeimg').style.display=t.screenshot?'inline-block':'none';
   $('editMistakes').innerHTML=MISTAKES.map((m,i)=>`<label class="mistake-option"><input id="editMistake${i}" type="checkbox" value="${esc(m)}" ${(t.mistakes||[]).includes(m)?'checked':''}>${esc(m)}</label>`).join('');
   const saved=Array.isArray(t.rules)?t.rules:RULES.map(()=>t.follow==='Yes');
   $('editRules').innerHTML=RULES.map((r,i)=>`<div class="check"><label>${esc(r)}</label><input id="editRule${i}" type="checkbox" style="width:auto" ${saved[i]?'checked':''}></div>`).join('');
   $('editTradeModal').classList.add('open');
 }
+function removeEditScreenshot(){
+  editPendingScreenshot=null;
+  editRemoveScreenshot=true;
+  $('editScreenshotFile').value='';
+  $('editScreenshotPreview').src='';
+  $('editScreenshotPreviewWrap').style.display='none';
+  $('editScreenshotStatus').textContent='Screenshot will be removed when you save.';
+}
+$('editScreenshotFile').onchange=async()=>{
+  const file=$('editScreenshotFile').files[0];
+  if(!file)return;
+  try{
+    editPendingScreenshot=await compressImage(file);
+    editRemoveScreenshot=false;
+    $('editScreenshotPreview').src=editPendingScreenshot;
+    $('editScreenshotPreviewWrap').style.display='block';
+    $('editScreenshotPreviewWrap').querySelector('.removeimg').style.display='inline-block';
+    $('editScreenshotStatus').textContent='New screenshot selected. Save Changes to keep it.';
+  }catch(err){
+    alert('Could not load that image. Please choose another image.');
+    $('editScreenshotFile').value='';
+  }
+};
 function closeEditTrade(e){
   if(!e || e.target?.id==='editTradeModal' || e.target?.tagName==='BUTTON'){
     $('editTradeModal').classList.remove('open');
@@ -435,7 +466,8 @@ $('editTradeForm').onsubmit=e=>{
     entry:$('editEntry').value,exit:$('editExit').value,sl:$('editSL').value,bias:$('editBias').value,
     crt:$('editCrt').value,liq:$('editLiq').value,confirm:$('editConfirm').value,plan:$('editPlan').value,
     mistakes:MISTAKES.filter((_,j)=>$('editMistake'+j)?.checked),
-    rules:RULES.map((_,j)=>Boolean($('editRule'+j)?.checked))
+    rules:RULES.map((_,j)=>Boolean($('editRule'+j)?.checked)),
+    screenshot:editRemoveScreenshot?'':(editPendingScreenshot||old.screenshot||'')
   };
   persist();
   $('editTradeModal').classList.remove('open');
