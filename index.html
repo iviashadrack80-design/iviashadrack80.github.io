@@ -68,12 +68,12 @@ body.theme-light{--bg:#f4f7fb;--panel:#ffffff;--panel2:#f0f4f9;--line:#d4ddea;--
       <div class="full"><label>TRADING PLAN</label><textarea id="editPlan" rows="5"></textarea></div>
       <div class="full"><label>MISTAKES</label><div class="mistake-grid" id="editMistakes"></div></div>
       <div class="full"><label>SETUP CHECKLIST</label><div class="checkgrid" id="editRules"></div></div>
-      <div class="full"><label>TRADE SCREENSHOT</label><div class="uploadbox"><input id="editScreenshotFile" type="file" accept="image/*" style="display:none"><button type="button" class="uploadbtn" onclick="document.getElementById('editScreenshotFile').click()">📷 Choose / Replace Screenshot</button><span id="editScreenshotStatus" class="muted">Existing screenshot will be kept unless replaced or removed.</span><div id="editScreenshotPreviewWrap" class="previewwrap" style="display:none"><img id="editScreenshotPreview" alt="Trade screenshot preview"><button type="button" class="removeimg" onclick="removeEditScreenshot()">Remove screenshot</button></div></div></div>
+      <div class="full"><label>TRADE SCREENSHOTS</label><div class="screenshot-pair"><div><label>BEFORE EXECUTION</label><div class="uploadbox"><input id="editBeforeScreenshotFile" type="file" accept="image/*" style="display:none"><button type="button" class="uploadbtn" onclick="document.getElementById('editBeforeScreenshotFile').click()">📷 Choose / Replace Before Screenshot</button><span id="editBeforeScreenshotStatus" class="muted">No before screenshot saved.</span><div id="editBeforeScreenshotPreviewWrap" class="previewwrap" style="display:none"><img id="editBeforeScreenshotPreview" alt="Before execution screenshot preview"><button type="button" class="removeimg" onclick="removeEditBeforeScreenshot()">Remove before screenshot</button></div></div></div><div><label>AFTER EXECUTION</label><div class="uploadbox"><input id="editScreenshotFile" type="file" accept="image/*" style="display:none"><button type="button" class="uploadbtn" onclick="document.getElementById('editScreenshotFile').click()">📷 Choose / Replace After Screenshot</button><span id="editScreenshotStatus" class="muted">No after screenshot saved.</span><div id="editScreenshotPreviewWrap" class="previewwrap" style="display:none"><img id="editScreenshotPreview" alt="After execution screenshot preview"><button type="button" class="removeimg" onclick="removeEditScreenshot()">Remove after screenshot</button></div></div></div></div></div>
       <div class="full" style="display:flex;justify-content:flex-end;gap:8px"><button type="button" onclick="closeEditTrade()">Cancel</button><button class="primary" type="submit">Save Changes</button></div>
     </form>
   </div>
 </div>
-<div id="shotModal" class="modal" onclick="closeShot(event)"><button class="modalclose" onclick="closeShot(event)">×</button><img id="shotModalImg" alt="Trade screenshot"></div>
+<div id="shotModal" class="modal" onclick="closeShot(event)"><button class="modalclose" onclick="closeShot(event)">×</button><img id="shotModalImg" alt="Trade screenshot"><button id="shotNext" class="viewshot" type="button" onclick="switchShot(event)" style="font-size:24px;padding:12px 18px;align-self:center" aria-label="Show the other screenshot">→</button></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="./supabase-config.js"></script>
 <script>
@@ -213,7 +213,7 @@ function renderLog(){
     <td class="${calcR(t)>=0?'green':'red'}"><span class="badge">${calcR(t).toFixed(2)}R</span></td>
     <td class="${signedPnl(t)>=0?'green':'red'}">${displayPnl(t)}</td>
     <td><span class="badge">${score(t)}/${RULES.length}</span></td>
-    <td>${t.screenshot?`<button class="viewshot" onclick="viewShot(${t.id})">📷 View</button>`:'—'}</td>
+    <td>${(t.beforeScreenshot||t.screenshot)?`<button class="viewshot" onclick="viewShot(${t.id})">📷 View ↔</button>`:'—'}</td>
     <td><button onclick="openTrade(${t.id})">Review</button> <button onclick="del(${t.id})">×</button></td>
   </tr>`).join('')||'<tr><td colspan="12" class="empty">No trades for this month and year with the selected filters.</td></tr>'
 }
@@ -392,7 +392,7 @@ function openTrade(id){
 }
 
 
-let currentTradeId=null, editPendingScreenshot=null, editRemoveScreenshot=false;
+let currentTradeId=null, editPendingScreenshot=null, editRemoveScreenshot=false, editPendingBeforeScreenshot=null, editRemoveBeforeScreenshot=false, shotViewSide="after", currentShotTradeId=null;
 function editOpenTrade(){
   if(currentTradeId!==null) openEditTrade(currentTradeId);
 }
@@ -421,8 +421,15 @@ function openEditTrade(id){
   $('editPlan').value=t.plan||t.psych||'';
   editPendingScreenshot=null;
   editRemoveScreenshot=false;
+  editPendingBeforeScreenshot=null;
+  editRemoveBeforeScreenshot=false;
+  $('editBeforeScreenshotFile').value='';
   $('editScreenshotFile').value='';
-  $('editScreenshotStatus').textContent=t.screenshot?'Existing screenshot loaded. Choose another to replace it.':'No screenshot saved for this trade.';
+  $('editBeforeScreenshotStatus').textContent=t.beforeScreenshot?'Existing before screenshot loaded. Choose another to replace it.':'No before screenshot saved for this trade.';
+  $('editBeforeScreenshotPreviewWrap').style.display=t.beforeScreenshot?'block':'none';
+  $('editBeforeScreenshotPreview').src=t.beforeScreenshot||'';
+  $('editBeforeScreenshotPreviewWrap').querySelector('.removeimg').style.display=t.beforeScreenshot?'inline-block':'none';
+  $('editScreenshotStatus').textContent=t.screenshot?'Existing after screenshot loaded. Choose another to replace it.':'No after screenshot saved for this trade.';
   $('editScreenshotPreviewWrap').style.display=t.screenshot?'block':'none';
   $('editScreenshotPreview').src=t.screenshot||'';
   $('editScreenshotPreviewWrap').querySelector('.removeimg').style.display=t.screenshot?'inline-block':'none';
@@ -437,8 +444,31 @@ function removeEditScreenshot(){
   $('editScreenshotFile').value='';
   $('editScreenshotPreview').src='';
   $('editScreenshotPreviewWrap').style.display='none';
-  $('editScreenshotStatus').textContent='Screenshot will be removed when you save.';
+  $('editScreenshotStatus').textContent='After screenshot will be removed when you save.';
 }
+function removeEditBeforeScreenshot(){
+  editPendingBeforeScreenshot=null;
+  editRemoveBeforeScreenshot=true;
+  $('editBeforeScreenshotFile').value='';
+  $('editBeforeScreenshotPreview').src='';
+  $('editBeforeScreenshotPreviewWrap').style.display='none';
+  $('editBeforeScreenshotStatus').textContent='Before screenshot will be removed when you save.';
+}
+$('editBeforeScreenshotFile').onchange=async()=>{
+  const file=$('editBeforeScreenshotFile').files[0];
+  if(!file)return;
+  try{
+    editPendingBeforeScreenshot=await compressImage(file);
+    editRemoveBeforeScreenshot=false;
+    $('editBeforeScreenshotPreview').src=editPendingBeforeScreenshot;
+    $('editBeforeScreenshotPreviewWrap').style.display='block';
+    $('editBeforeScreenshotPreviewWrap').querySelector('.removeimg').style.display='inline-block';
+    $('editBeforeScreenshotStatus').textContent='New before screenshot selected. Save Changes to keep it.';
+  }catch(err){
+    alert('Could not load that image. Please choose another image.');
+    $('editBeforeScreenshotFile').value='';
+  }
+};
 $('editScreenshotFile').onchange=async()=>{
   const file=$('editScreenshotFile').files[0];
   if(!file)return;
@@ -472,6 +502,7 @@ $('editTradeForm').onsubmit=e=>{
     crt:$('editCrt').value,liq:$('editLiq').value,confirm:$('editConfirm').value,plan:$('editPlan').value,
     mistakes:MISTAKES.filter((_,j)=>$('editMistake'+j)?.checked),
     rules:RULES.map((_,j)=>Boolean($('editRule'+j)?.checked)),
+    beforeScreenshot:editRemoveBeforeScreenshot?'':(editPendingBeforeScreenshot||old.beforeScreenshot||''),
     screenshot:editRemoveScreenshot?'':(editPendingScreenshot||old.screenshot||'')
   };
   persist();
@@ -482,7 +513,9 @@ $('editTradeForm').onsubmit=e=>{
 };
 
 async function del(id){if(!confirm('Delete this trade?'))return;trades=trades.filter(t=>String(t.id)!==String(id));persist();render();if(cloud&&cloudUser){try{const {error}=await cloud.from(CLOUD_TABLES.trades).delete().eq('user_id',cloudUser.id).eq('id',String(id));if(error)throw error}catch(e){console.error(e);setCloudStatus('Sync error',false,true)}}}
-function viewShot(id){let t=trades.find(x=>x.id===id);if(!t?.screenshot)return;$('shotModalImg').src=t.screenshot;$('shotModal').classList.add('open')}function closeShot(e){if(e.target.id==='shotModal'||e.target.classList.contains('modalclose')){$('shotModal').classList.remove('open');$('shotModalImg').src=''}}
+function viewShot(id){const t=trades.find(x=>String(x.id)===String(id));if(!t||(!t.screenshot&&!t.beforeScreenshot))return;currentShotTradeId=t.id;shotViewSide=t.screenshot?'after':'before';$('shotModalImg').src=shotViewSide==='after'?t.screenshot:t.beforeScreenshot;$('shotModalImg').alt=shotViewSide==='after'?'After execution screenshot':'Before execution screenshot';$('shotNext').style.display=(t.screenshot&&t.beforeScreenshot)?'inline-block':'none';$('shotModal').classList.add('open')}
+function switchShot(e){if(e)e.stopPropagation();const t=trades.find(x=>String(x.id)===String(currentShotTradeId));if(!t||!t.screenshot||!t.beforeScreenshot)return;shotViewSide=shotViewSide==='after'?'before':'after';$('shotModalImg').src=shotViewSide==='after'?t.screenshot:t.beforeScreenshot;$('shotModalImg').alt=shotViewSide==='after'?'After execution screenshot':'Before execution screenshot'}
+function closeShot(e){if(e.target.id==='shotModal'||e.target.classList.contains('modalclose')){$('shotModal').classList.remove('open');$('shotModalImg').src='';currentShotTradeId=null}}
 function exportCSV(){let rows=[['Date','Instrument','Direction','Session','Entry Time','Bias','Setup Quality','CRT','Liquidity','Confirmation','Risk %','Result','R (RRR)','PnL','Rule Score','Rules','Mistakes','Entry','Exit','SL','Trading Plan','Screenshot Saved'],...trades.map(t=>[t.date,t.pair,t.dir,t.session,t.entryTime||'',t.bias||'',t.setupQuality||'',t.crt,t.liq,t.confirm,t.risk,t.result,calcR(t),signedPnl(t),score(t)+'/'+RULES.length,(t.rules||[]).map((v,i)=>RULES[i]+':'+(v?'Yes':'No')).join(' | '),(t.mistakes||[]).join(' | '),t.entry??'',t.exit??'',t.sl??'',t.plan??t.psych??'',t.screenshot?'Yes':'No'])];let csv=rows.map(r=>r.map(x=>`"${String(x??'').replaceAll('"','""')}"`).join(',')).join('\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='CRT_PRO_Trade_Journal.csv';a.click()}
 const APPEARANCE_KEY='crtProAppearance';
 function getAppearance(){try{return JSON.parse(localStorage.getItem(APPEARANCE_KEY)||'{}')}catch(e){return {}}}
