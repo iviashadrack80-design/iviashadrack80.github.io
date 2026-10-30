@@ -411,7 +411,8 @@ function openEditTrade(id){
   $('editRisk').value=num(t.risk,acc.risk||1);
   $('editRR').value=num(t.rr,2.5);
   $('editResult').value=t.result||'Win';
-  $('editPnl').value=Math.abs(num(t.pnl));\n  $('editTradeModel').value=t.tradeModel||'Continuation';
+  $('editPnl').value=Math.abs(num(t.pnl));
+  $('editTradeModel').value=t.tradeModel||'Continuation';
   $('editEntry').value=t.entry??'';
   $('editExit').value=t.exit??'';
   $('editSL').value=t.sl??'';
