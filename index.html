@@ -531,6 +531,35 @@ async function del(id){if(!confirm('Delete this trade?'))return;trades=trades.fi
 function viewShot(id){const t=trades.find(x=>String(x.id)===String(id));if(!t||(!t.screenshot&&!t.beforeScreenshot))return;currentShotTradeId=t.id;shotViewSide=t.screenshot?'after':'before';$('shotModalImg').src=shotViewSide==='after'?t.screenshot:t.beforeScreenshot;$('shotModalImg').alt=shotViewSide==='after'?'After execution screenshot':'Before execution screenshot';$('shotNext').style.display=(t.screenshot&&t.beforeScreenshot)?'inline-block':'none';$('shotModal').classList.add('open')}
 function switchShot(e){if(e)e.stopPropagation();const t=trades.find(x=>String(x.id)===String(currentShotTradeId));if(!t||!t.screenshot||!t.beforeScreenshot)return;shotViewSide=shotViewSide==='after'?'before':'after';$('shotModalImg').src=shotViewSide==='after'?t.screenshot:t.beforeScreenshot;$('shotModalImg').alt=shotViewSide==='after'?'After execution screenshot':'Before execution screenshot'}
 function closeShot(e){if(e.target.id==='shotModal'||e.target.classList.contains('modalclose')){$('shotModal').classList.remove('open');$('shotModalImg').src='';currentShotTradeId=null}}
+function downloadLocalBackup(){
+  try{
+    const read=(key,fallback)=>{try{const raw=localStorage.getItem(key);return raw===null?fallback:JSON.parse(raw)}catch(e){return fallback}};
+    const backup={
+      format:'ShadrackTrades local backup',
+      version:1,
+      exportedAt:new Date().toISOString(),
+      source:'This browser/device local storage',
+      note:'This file contains local journal data only. It does not include Supabase cloud records that are not present on this device, nor login credentials or authentication tokens.',
+      trades:read('crtProTrades',trades),
+      account:read('crtProAccount',acc),
+      reviews:read('crtProReviews',reviews),
+      pendingCloudTradeIds:read('crtProDirtyTradeIds',[])
+    };
+    const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='ShadrackTrades-local-backup-'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1500);
+    alert('Local journal backup downloaded. Keep this file somewhere safe. This backup contains this device’s saved journal data only.');
+  }catch(err){
+    console.error(err);
+    alert('Backup could not be created. Your journal data has not been changed. Please try again.');
+  }
+}
 function exportCSV(){let rows=[['Date','Instrument','Direction','Session','Entry Time','Bias','Confirmation','Risk %','Result','R (RRR)','PnL','Trade Model','Rule Score','Rules','Mistakes','Entry','Exit','SL','Trading Plan','Screenshot Saved'],...trades.map(t=>[t.date,t.pair,t.dir,t.session,t.entryTime||'',t.bias||'',t.confirm,t.risk,t.result,calcR(t),signedPnl(t),t.tradeModel||'',score(t)+'/'+RULES.length,(t.rules||[]).map((v,i)=>RULES[i]+':'+(v?'Yes':'No')).join(' | '),(t.mistakes||[]).join(' | '),t.entry??'',t.exit??'',t.sl??'',t.plan??t.psych??'',t.screenshot?'Yes':'No'])];let csv=rows.map(r=>r.map(x=>`"${String(x??'').replaceAll('"','""')}"`).join(',')).join('\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='CRT_PRO_Trade_Journal.csv';a.click()}
 const APPEARANCE_KEY='crtProAppearance';
 function getAppearance(){try{return JSON.parse(localStorage.getItem(APPEARANCE_KEY)||'{}')}catch(e){return {}}}
@@ -604,7 +633,7 @@ render();renderCalendar();
 <div class="cloudbar" id="cloudBar">
   <span id="cloudDot" class="cloud-dot"></span>
   <span id="cloudStatus">Connecting…</span>
-  <button id="cloudAuthBtn" type="button" onclick="openAuth()">Sign in</button>
+  <button id="localBackupBtn" type="button" onclick="downloadLocalBackup()" title="Download a full backup of this device’s journal data">Download Backup</button><button id="cloudAuthBtn" type="button" onclick="openAuth()">Sign in</button>
 </div>
 
 <div id="authModal" class="auth-modal" onclick="closeAuth(event)">
