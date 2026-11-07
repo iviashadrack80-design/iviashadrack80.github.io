@@ -82,6 +82,7 @@ let acc=JSON.parse(localStorage.getItem('crtProAccount')||'{"start":5000,"risk":
 let reviews=JSON.parse(localStorage.getItem('crtProReviews')||'{}');
 let pendingScreenshot='',pendingBeforeScreenshot='',calCursor=new Date();
 let cloud=null, cloudUser=null, cloudReady=false, cloudBusy=false;
+let dirtyTradeIds=new Set(JSON.parse(localStorage.getItem('crtProDirtyTradeIds')||'[]'));
 const CLOUD_TABLES={trades:'journal_trades',reviews:'journal_reviews',settings:'journal_settings'};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -102,7 +103,13 @@ function isoToday(){return new Date().toISOString().slice(0,10)}
 function calcR(t){return t.result==='Win'?num(t.rr):t.result==='Loss'?-1:0}
 function score(t){return (t.rules||[]).filter(Boolean).length}
 function stats(a=trades){let n=a.length,w=a.filter(t=>t.result==='Win'),l=a.filter(t=>t.result==='Loss'),gw=w.reduce((s,t)=>s+signedPnl(t),0),gl=l.reduce((s,t)=>s+signedPnl(t),0);return{n,w,l,wr:n?w.length/n*100:0,r:a.reduce((s,t)=>s+calcR(t),0),p:a.reduce((s,t)=>s+signedPnl(t),0),pf:gl?Math.abs(gw/gl):0,adherence:n?a.reduce((s,t)=>s+score(t),0)/(n*RULES.length)*100:0}}
-function persist(){localStorage.setItem('crtProTrades',JSON.stringify(trades));localStorage.setItem('crtProAccount',JSON.stringify(acc));localStorage.setItem('crtProReviews',JSON.stringify(reviews));if(cloudReady&&!cloudBusy) queueCloudSync()}
+function persist(){
+  const previous=JSON.parse(localStorage.getItem('crtProTrades')||'[]');
+  const oldById=new Map(previous.map(t=>[String(t.id),JSON.stringify(t)]));
+  for(const t of trades){if(oldById.get(String(t.id))!==JSON.stringify(t))dirtyTradeIds.add(String(t.id));}
+  localStorage.setItem('crtProDirtyTradeIds',JSON.stringify([...dirtyTradeIds]));
+  localStorage.setItem('crtProTrades',JSON.stringify(trades));localStorage.setItem('crtProAccount',JSON.stringify(acc));localStorage.setItem('crtProReviews',JSON.stringify(reviews));if(cloudReady&&!cloudBusy) queueCloudSync()
+}
 let syncTimer=null;function queueCloudSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>syncCloud().catch(e=>setCloudStatus('Sync error',false,true)),450)}
 function setCloudStatus(text,ok=false,err=false){if($('cloudStatus'))$('cloudStatus').textContent=text;if($('cloudDot'))$('cloudDot').className='cloud-dot '+(ok?'ok':err?'err':'');if($('cloudAuthBtn'))$('cloudAuthBtn').textContent=cloudUser?'Account':'Sign in'}
 function showAuthMsg(msg){if($('authMsg'))$('authMsg').textContent=msg}
@@ -140,7 +147,7 @@ async function loadCloud(){
     // phone/laptop cache cannot resurrect deleted trades or overwrite newer records.
     if(remote.ts.length===0 && trades.length){
       cloudReady=true;
-      await syncCloud();
+      await syncCloud(true);
       const after=await fetchCloudRows();
       trades=after.ts.filter(x=>x?.data).map(x=>normalizeTrade({...x.data,id:x.data.id??x.id}));
       reviews=after.rs.length?Object.fromEntries(after.rs.map(x=>[x.key,x.data])):reviews;
@@ -165,8 +172,16 @@ async function refreshCloudOnly(){
     saveLocalSnapshot(); setCloudStatus('Synced',true); render();renderCalendar();renderWeeklyPerformance();
   }catch(e){console.error(e);setCloudStatus('Refresh error',false,true)}
 }
-function startCloudRefresh(){if(cloudRefreshTimer)clearInterval(cloudRefreshTimer);cloudRefreshTimer=setInterval(refreshCloudOnly,5000)}
-async function syncCloud(){if(!cloud||!cloudUser||cloudBusy)return;cloudBusy=true;setCloudStatus('Syncing…');try{const user_id=cloudUser.id;for(const t of trades){const {error}=await cloud.from(CLOUD_TABLES.trades).upsert({id:String(t.id),user_id,data:t},{onConflict:'id,user_id'});if(error)throw error}const reviewRows=Object.entries(reviews).map(([key,data])=>({user_id,key,data}));if(reviewRows.length){const {error}=await cloud.from(CLOUD_TABLES.reviews).upsert(reviewRows,{onConflict:'user_id,key'});if(error)throw error}const {error:se}=await cloud.from(CLOUD_TABLES.settings).upsert({user_id,data:{account:acc,appearance:getAppearance()}},{onConflict:'user_id'});if(se)throw se;cloudReady=true;setCloudStatus('Synced',true)}finally{cloudBusy=false}}
+function startCloudRefresh(){
+  if(cloudRefreshTimer)clearInterval(cloudRefreshTimer);
+  cloudRefreshTimer=setInterval(()=>{if(!document.hidden)refreshCloudOnly()},60000);
+  if(!window.cloudRefreshListeners){
+    window.cloudRefreshListeners=true;
+    window.addEventListener('focus',()=>refreshCloudOnly());
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshCloudOnly()});
+  }
+}
+async function syncCloud(forceAll=false){if(!cloud||!cloudUser||cloudBusy)return;cloudBusy=true;setCloudStatus('Syncing…');try{const user_id=cloudUser.id;const pending=forceAll?trades:trades.filter(t=>dirtyTradeIds.has(String(t.id)));for(const t of pending){const {error}=await cloud.from(CLOUD_TABLES.trades).upsert({id:String(t.id),user_id,data:t},{onConflict:'id,user_id'});if(error)throw error;dirtyTradeIds.delete(String(t.id));localStorage.setItem('crtProDirtyTradeIds',JSON.stringify([...dirtyTradeIds]))}const reviewRows=Object.entries(reviews).map(([key,data])=>({user_id,key,data}));if(reviewRows.length){const {error}=await cloud.from(CLOUD_TABLES.reviews).upsert(reviewRows,{onConflict:'user_id,key'});if(error)throw error}const {error:se}=await cloud.from(CLOUD_TABLES.settings).upsert({user_id,data:{account:acc,appearance:getAppearance()}},{onConflict:'user_id'});if(se)throw se;cloudReady=true;setCloudStatus('Synced',true)}finally{cloudBusy=false}}
 async function syncNow(){if(!cloudUser){showAuthMsg('Sign in first.');return}showAuthMsg('Syncing local journal to cloud…');try{await syncCloud();showAuthMsg('Synced. Your journal is now available on other devices when you sign in.')}catch(e){showAuthMsg('Sync failed: '+(e.message||e))}}
 function page(id,btn){let target=$(id);if(!target)return;document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));target.classList.add('active');document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));if(btn)btn.classList.add('active');let titles={dashboard:'Trading Dashboard',add:'Record Trade',trades:'Trade Log',calendar:'Trade Calendar',analytics:'Analytics',daily:'Daily Review',weekly:'Weekly Review',monthly:'Monthly Review',account:'Account Settings',tradeDetail:'Trade Review',settings:'Journal Settings'};if($('title'))$('title').textContent=titles[id]||'Trading Journal';render();if(id==='daily')renderDaily();if(id==='weekly')renderWeekly();if(id==='monthly')renderMonthly();if(id==='calendar')renderCalendar()}
 function timingGuide(session){if(session==='Asia')return 'Kenya time (EAT): valid Asian trading window is 2:00 AM–7:00 AM.';if(session==='London')return 'Kenya time (EAT): valid London trading window is 10:00 AM–3:00 PM.';if(session==='New York')return 'New York time: use the 8:00 AM 1H candle high/low. Do not enter before 9:30 AM. Stop taking this setup after 11:30 AM.';return 'Select a session to view its timing guide.'}
@@ -512,7 +527,7 @@ $('editTradeForm').onsubmit=e=>{
   alert('Trade updated successfully.');
 };
 
-async function del(id){if(!confirm('Delete this trade?'))return;trades=trades.filter(t=>String(t.id)!==String(id));persist();render();if(cloud&&cloudUser){try{const {error}=await cloud.from(CLOUD_TABLES.trades).delete().eq('user_id',cloudUser.id).eq('id',String(id));if(error)throw error}catch(e){console.error(e);setCloudStatus('Sync error',false,true)}}}
+async function del(id){if(!confirm('Delete this trade?'))return;trades=trades.filter(t=>String(t.id)!==String(id));dirtyTradeIds.delete(String(id));localStorage.setItem('crtProDirtyTradeIds',JSON.stringify([...dirtyTradeIds]));persist();render();if(cloud&&cloudUser){try{const {error}=await cloud.from(CLOUD_TABLES.trades).delete().eq('user_id',cloudUser.id).eq('id',String(id));if(error)throw error}catch(e){console.error(e);setCloudStatus('Sync error',false,true)}}}
 function viewShot(id){const t=trades.find(x=>String(x.id)===String(id));if(!t||(!t.screenshot&&!t.beforeScreenshot))return;currentShotTradeId=t.id;shotViewSide=t.screenshot?'after':'before';$('shotModalImg').src=shotViewSide==='after'?t.screenshot:t.beforeScreenshot;$('shotModalImg').alt=shotViewSide==='after'?'After execution screenshot':'Before execution screenshot';$('shotNext').style.display=(t.screenshot&&t.beforeScreenshot)?'inline-block':'none';$('shotModal').classList.add('open')}
 function switchShot(e){if(e)e.stopPropagation();const t=trades.find(x=>String(x.id)===String(currentShotTradeId));if(!t||!t.screenshot||!t.beforeScreenshot)return;shotViewSide=shotViewSide==='after'?'before':'after';$('shotModalImg').src=shotViewSide==='after'?t.screenshot:t.beforeScreenshot;$('shotModalImg').alt=shotViewSide==='after'?'After execution screenshot':'Before execution screenshot'}
 function closeShot(e){if(e.target.id==='shotModal'||e.target.classList.contains('modalclose')){$('shotModal').classList.remove('open');$('shotModalImg').src='';currentShotTradeId=null}}
