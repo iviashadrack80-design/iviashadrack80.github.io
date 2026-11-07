@@ -298,37 +298,23 @@ function monthWeeks(month){
   const [yy,mm]=month.split('-').map(Number);
   const first=new Date(yy,mm-1,1);
   const last=new Date(yy,mm,0);
-  // Week 1 begins on the first calendar date and ends on the Friday
-  // of the first Monday-Friday trading week. Later weeks start on Monday.
-  // The final week always runs from the month's last Monday through its
-  // actual final calendar date, including Saturday/Sunday when applicable.
+  // Week 1 always starts on the 1st and ends on the first Friday.
+  // If the month starts on Friday, Week 1 is that single trading day.
+  // Every later week runs Monday-Friday, with the final week shortened
+  // to the last date of the month when the month ends midweek.
   const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   const weeks=[];
-  const firstMonday=new Date(first);
-  firstMonday.setDate(first.getDate()+((8-first.getDay())%7 || 0));
-  // JavaScript Sunday=0: move forward to the first Monday on/after day 1.
-  if(first.getDay()===0) firstMonday.setDate(first.getDate()+1);
-  const firstFriday=new Date(firstMonday);
-  firstFriday.setDate(firstMonday.getDate()+4);
-  let start=new Date(first);
-  let end=new Date(Math.min(firstFriday.getTime(),last.getTime()));
-  weeks.push({label:'Week 1',start:iso(start),end:iso(end)});
-  start=new Date(firstFriday);
-  start.setDate(firstFriday.getDate()+3); // following Monday
+  const firstFriday=new Date(first);
+  firstFriday.setDate(first.getDate()+((5-first.getDay()+7)%7));
+  weeks.push({label:'Week 1',start:iso(first),end:iso(firstFriday)});
+  let start=new Date(firstFriday);
+  start.setDate(start.getDate()+3); // Monday after the first Friday
   let weekNo=2;
   while(start<=last){
-    end=new Date(start);
-    // The last Monday of the month begins the final week; include every
-    // remaining calendar date in that month, even weekend dates.
-    if(start.getFullYear()===last.getFullYear() &&
-       start.getMonth()===last.getMonth() &&
-       start.getDate() + 7 >= last.getDate()){
-      end=new Date(last);
-    }else{
-      end.setDate(start.getDate()+4);
-      if(end>last) end=new Date(last);
-    }
-    if(start<=end) weeks.push({label:`Week ${weekNo}`,start:iso(start),end:iso(end)});
+    const end=new Date(start);
+    end.setDate(end.getDate()+4); // Friday
+    if(end>last) end.setTime(last.getTime());
+    weeks.push({label:`Week ${weekNo}`,start:iso(start),end:iso(end)});
     start=new Date(start);
     start.setDate(start.getDate()+7);
     weekNo++;
