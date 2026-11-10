@@ -72,8 +72,6 @@ body.theme-light{--bg:#f4f7fb;--panel:#ffffff;--panel2:#f0f4f9;--line:#d4ddea;--
   </div>
 </div>
 <div id="shotModal" class="modal" onclick="closeShot(event)"><button class="modalclose" onclick="closeShot(event)">×</button><img id="shotModalImg" alt="Trade screenshot"><button id="shotNext" class="viewshot" type="button" onclick="switchShot(event)" style="font-size:24px;padding:12px 18px;align-self:center" aria-label="Show the other screenshot">→</button></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="./supabase-config.js"></script>
 <script>
 const RULES=['Wait for confirmation','Follow my trading plan','Correct risk management','No emotional entry','No over-leverage trading','Proper stop-loss use','HTF bias confirmed','Market structure confirmed'];
 const MISTAKES=['Early entry','Late entry','FOMO','Revenge trade','Moved SL','Closed early','Missed confirmation','Outside session/Key time','Invalid setup'];
@@ -108,7 +106,7 @@ function persist(){
   const oldById=new Map(previous.map(t=>[String(t.id),JSON.stringify(t)]));
   for(const t of trades){if(oldById.get(String(t.id))!==JSON.stringify(t))dirtyTradeIds.add(String(t.id));}
   localStorage.setItem('crtProDirtyTradeIds',JSON.stringify([...dirtyTradeIds]));
-  localStorage.setItem('crtProTrades',JSON.stringify(trades));localStorage.setItem('crtProAccount',JSON.stringify(acc));localStorage.setItem('crtProReviews',JSON.stringify(reviews));if(cloudReady&&!cloudBusy) queueCloudSync()
+  localStorage.setItem('crtProTrades',JSON.stringify(trades));localStorage.setItem('crtProAccount',JSON.stringify(acc));localStorage.setItem('crtProReviews',JSON.stringify(reviews))
 }
 let syncTimer=null;function queueCloudSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>syncCloud().catch(e=>setCloudStatus('Sync error',false,true)),450)}
 function setCloudStatus(text,ok=false,err=false){if($('cloudStatus'))$('cloudStatus').textContent=text;if($('cloudDot'))$('cloudDot').className='cloud-dot '+(ok?'ok':err?'err':'');if($('cloudAuthBtn'))$('cloudAuthBtn').textContent=cloudUser?'Account':'Sign in'}
@@ -116,10 +114,10 @@ function showAuthMsg(msg){if($('authMsg'))$('authMsg').textContent=msg}
 function openAuth(){if($('authModal'))$('authModal').classList.add('open')}
 function closeAuth(){if(!cloudUser){showAuthMsg('Please sign in with your journal email and password to continue.');return}if($('authModal'))$('authModal').classList.remove('open')}
 function configuredSupabase(){return typeof SUPABASE_URL==='string'&&SUPABASE_URL.startsWith('http')&&typeof SUPABASE_ANON_KEY==='string'&&SUPABASE_ANON_KEY.length>20&&window.supabase}
-async function initCloud(){if(!configuredSupabase()){setCloudStatus('Local mode');return}try{cloud=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);const {data:{session}}=await cloud.auth.getSession();if(session){cloudUser=session.user;await loadCloud()}else{setCloudStatus('Please sign in to sync');openAuth()}cloud.auth.onAuthStateChange(async(_event,session)=>{cloudUser=session?.user||null;if(cloudUser){await loadCloud()}else{cloudReady=false;setCloudStatus('Signed out')}})}catch(e){console.error(e);setCloudStatus('Cloud error',false,true)}}
-async function signInCloud(){if(!configuredSupabase()){showAuthMsg('Add your Supabase URL and publishable key to supabase-config.js first.');return}const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password){showAuthMsg('Enter email and password.');return}showAuthMsg('Signing in…');const {error}=await cloud.auth.signInWithPassword({email,password});showAuthMsg(error?error.message:'Signed in. Loading your journal…')}
-async function signUpCloud(){if(!configuredSupabase()){showAuthMsg('Add your Supabase URL and publishable key to supabase-config.js first.');return}const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||password.length<6){showAuthMsg('Enter a valid email and a password of at least 6 characters.');return}showAuthMsg('Creating account…');const {error}=await cloud.auth.signUp({email,password});showAuthMsg(error?error.message:'Account created. Check your email if confirmation is enabled.')}
-async function signOutCloud(){if(cloud)await cloud.auth.signOut();closeAuth()}
+async function initCloud(){cloud=null;cloudUser=null;cloudReady=false;setCloudStatus('Laptop-only storage',true)}
+async function signInCloud(){showAuthMsg('Cloud sign-in has been disabled. This journal saves on this laptop only.')}
+async function signUpCloud(){showAuthMsg('Cloud accounts are disabled in laptop-only mode.')}
+async function signOutCloud(){closeAuth()}
 function localSnapshot(){return{trades,acc,reviews}}
 let cloudRefreshTimer=null;
 async function fetchCloudRows(){
@@ -629,38 +627,11 @@ function clearBeforeScreenshot(){pendingBeforeScreenshot='';$('beforeScreenshot'
 $('form').onsubmit=e=>{e.preventDefault();let t={id:Date.now(),createdAt:Date.now(),updatedAt:Date.now(),date:$('date').value,pair:$('pair').value,dir:$('dir').value,session:$('session').value,confirm:$('confirm').value,risk:num($('risk').value,acc.risk||1),rr:num($('rr').value,2.5),result:$('result').value,pnl:($('result').value==='Loss'?-Math.abs(num($('pnl').value)):$('result').value==='Win'?Math.abs(num($('pnl').value)):0),entry:$('entry').value,exit:$('exit').value,sl:$('sl').value,details:[`Entry: ${$('entry').value}`,`Exit: ${$('exit').value}`,`SL: ${$('sl').value}`].join(' | '),plan:$('plan').value,bias:document.querySelector('input[name="bias"]:checked')?.value||'Bullish',entryTime:$('entryTime').value,tradeModel:$('tradeModel').value,mistakes:selectedMistakes(),rules:RULES.map((_,i)=>$('rule'+i).checked),preTradeChecklist:$('session').value==='Asia'?{session:'Asia',title:'Asian Session – Pre-Trade Checklist',timeLabel:'Asian Session | 2:00 AM – 3:00 AM Kenyan Time',groups:[{title:'Preparation',items:[{question:'Have I marked the recent high and recent low before 3:00 AM on the 15-minute timeframe?',answer:document.querySelector('input[name="preTradeCheck0"]:checked')?.value||''}]},{title:'Liquidity Sweep',items:[{question:'Has the market swept either the Asian high or Asian low?',answer:document.querySelector('input[name="preTradeCheck1"]:checked')?.value||''}]},{title:'Entry Model (3M/5M)',items:['Has the market inverted an opposing FVG in favour of my trade direction?','Has the market retested a favourable FVG?','Has the retest shown rejection?','Has the market closed above the last bearish candle (BUY) or below the last bullish candle (SELL)?','Has the market retraced to the 50% Fibonacci level?'].map((question,i)=>({question,answer:document.querySelector('input[name="preTradeCheck'+(i+2)+'"]:checked')?.value||''}))}]}:null,beforeScreenshot:pendingBeforeScreenshot,screenshot:pendingScreenshot};trades.unshift(t);try{persist()}catch(err){trades.shift();alert('This screenshot is too large for browser storage. Try a smaller screenshot.');return}e.target.reset();document.querySelector('input[name="bias"][value="Bullish"]').checked=true;$('date').value=isoToday();$('risk').value=acc.risk||1;$('rr').value=2.5;$('pnl').value=0;renderAddChecklist();renderMistakeGrid();updateTimingGuide();renderSessionPrecheck();clearScreenshot();clearBeforeScreenshot();render();openTrade(t.id)};
 render();renderCalendar();
 </script>
-<!-- CLOUD SYNC UI -->
+<!-- LAPTOP-ONLY STORAGE STATUS -->
 <div class="cloudbar" id="cloudBar">
-  <span id="cloudDot" class="cloud-dot"></span>
-  <span id="cloudStatus">Connecting…</span>
-  <button id="localBackupBtn" type="button" onclick="downloadLocalBackup()" title="Download a full backup of this device’s journal data">Download Backup</button><button id="cloudAuthBtn" type="button" onclick="openAuth()">Sign in</button>
-</div>
-
-<div id="authModal" class="auth-modal" onclick="closeAuth(event)">
-  <div class="auth-card" onclick="event.stopPropagation()">
-    <h2>Cloud Sync</h2>
-    <p class="muted">Sign in with the same journal account on your laptop and phone so your trades can sync between devices.</p>
-    <div class="field">
-      <label>EMAIL</label>
-      <input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com">
-    </div>
-    <div class="field">
-      <label>PASSWORD</label>
-      <input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 6 characters">
-    </div>
-    <div class="auth-actions">
-      <button type="button" class="primary" onclick="signInCloud()">Sign in</button>
-      <button type="button" onclick="signUpCloud()">Create account</button>
-    </div>
-    <div class="auth-actions">
-      <button type="button" onclick="syncNow()">Sync / Migrate local data</button>
-      <button type="button" onclick="signOutCloud()">Sign out</button>
-    </div>
-    <div id="authMsg" class="auth-msg"></div>
-    <div style="display:flex;justify-content:flex-end;margin-top:8px">
-      <button type="button" onclick="closeAuth()">Close</button>
-    </div>
-  </div>
+  <span class="cloud-dot ok"></span>
+  <span id="cloudStatus">Laptop-only storage — saved in this browser</span>
+  <button id="localBackupBtn" type="button" onclick="downloadLocalBackup()" title="Download a full backup of this laptop’s journal data">Download Backup</button>
 </div>
 
 </body></html>
