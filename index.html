@@ -106,7 +106,8 @@ function persist(){
   const oldById=new Map(previous.map(t=>[String(t.id),JSON.stringify(t)]));
   for(const t of trades){if(oldById.get(String(t.id))!==JSON.stringify(t))dirtyTradeIds.add(String(t.id));}
   localStorage.setItem('crtProDirtyTradeIds',JSON.stringify([...dirtyTradeIds]));
-  localStorage.setItem('crtProTrades',JSON.stringify(trades));localStorage.setItem('crtProAccount',JSON.stringify(acc));localStorage.setItem('crtProReviews',JSON.stringify(reviews))
+  localStorage.setItem('crtProTrades',JSON.stringify(trades));localStorage.setItem('crtProAccount',JSON.stringify(acc));localStorage.setItem('crtProReviews',JSON.stringify(reviews));
+  if(cloudToken()){localStorage.setItem('crtProCloudDirty','1');queueCloudSync()}
 }
 let syncTimer=null;function queueCloudSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>syncCloud().catch(e=>setCloudStatus('Sync error',false,true)),450)}
 function setCloudStatus(text,ok=false,err=false){if($('cloudStatus'))$('cloudStatus').textContent=text;if($('cloudDot'))$('cloudDot').className='cloud-dot '+(ok?'ok':err?'err':'');if($('cloudAuthBtn'))$('cloudAuthBtn').textContent=cloudUser?'Account':'Sign in'}
@@ -114,73 +115,23 @@ function showAuthMsg(msg){if($('authMsg'))$('authMsg').textContent=msg}
 function openAuth(){if($('authModal'))$('authModal').classList.add('open')}
 function closeAuth(){if(!cloudUser){showAuthMsg('Please sign in with your journal email and password to continue.');return}if($('authModal'))$('authModal').classList.remove('open')}
 function configuredSupabase(){return typeof SUPABASE_URL==='string'&&SUPABASE_URL.startsWith('http')&&typeof SUPABASE_ANON_KEY==='string'&&SUPABASE_ANON_KEY.length>20&&window.supabase}
-async function initCloud(){cloud=null;cloudUser=null;cloudReady=false;setCloudStatus('Laptop-only storage',true)}
-async function signInCloud(){showAuthMsg('Cloud sign-in has been disabled. This journal saves on this laptop only.')}
-async function signUpCloud(){showAuthMsg('Cloud accounts are disabled in laptop-only mode.')}
-async function signOutCloud(){closeAuth()}
-function localSnapshot(){return{trades,acc,reviews}}
+const CLOUDFLARE_SYNC_URL='https://shadracktrades-sync.iviashadrack80.workers.dev';
 let cloudRefreshTimer=null;
-async function fetchCloudRows(){
-  if(!cloud||!cloudUser) return null;
-  const [{data:ts,error:te},{data:rs,error:re},{data:ss,error:se}]=await Promise.all([
-    cloud.from(CLOUD_TABLES.trades).select('id,data').eq('user_id',cloudUser.id),
-    cloud.from(CLOUD_TABLES.reviews).select('key,data').eq('user_id',cloudUser.id),
-    cloud.from(CLOUD_TABLES.settings).select('data').eq('user_id',cloudUser.id).maybeSingle()
-  ]);
-  if(te||re||se) throw te||re||se;
-  return {ts:ts||[],rs:rs||[],ss};
-}
-function saveLocalSnapshot(){
-  localStorage.setItem('crtProTrades',JSON.stringify(trades));
-  localStorage.setItem('crtProReviews',JSON.stringify(reviews));
-  localStorage.setItem('crtProAccount',JSON.stringify(acc));
-}
-async function loadCloud(){
-  if(!cloud||!cloudUser)return;
-  cloudReady=false; setCloudStatus('Loading cloud…');
-  try{
-    const remote=await fetchCloudRows();
-    // Initial migration only: if the cloud has no trades yet, upload this device's
-    // local records. Once cloud records exist, Supabase is authoritative so a stale
-    // phone/laptop cache cannot resurrect deleted trades or overwrite newer records.
-    if(remote.ts.length===0 && trades.length){
-      cloudReady=true;
-      await syncCloud(true);
-      const after=await fetchCloudRows();
-      trades=after.ts.filter(x=>x?.data).map(x=>normalizeTrade({...x.data,id:x.data.id??x.id}));
-      reviews=after.rs.length?Object.fromEntries(after.rs.map(x=>[x.key,x.data])):reviews;
-      if(after.ss?.data){acc=after.ss.data.account||acc;if(after.ss.data.appearance){localStorage.setItem(APPEARANCE_KEY,JSON.stringify(after.ss.data.appearance));applyAppearance()}}
-    }else{
-      trades=remote.ts.filter(x=>x?.data).map(x=>normalizeTrade({...x.data,id:x.data.id??x.id}));
-      // Cloud is authoritative after initial migration; retain local reviews only if cloud has none.
-      if(remote.rs.length) reviews=Object.fromEntries(remote.rs.map(x=>[x.key,x.data]));
-      if(remote.ss?.data){acc=remote.ss.data.account||acc;if(remote.ss.data.appearance){localStorage.setItem(APPEARANCE_KEY,JSON.stringify(remote.ss.data.appearance));applyAppearance()}}
-    }
-    saveLocalSnapshot(); cloudReady=true; setCloudStatus('Synced',true); closeAuth();
-    render();renderCalendar();renderWeeklyPerformance();startCloudRefresh();
-  }catch(e){console.error(e);setCloudStatus('Cloud error',false,true);showAuthMsg('Cloud load failed: '+(e.message||e))}
-}
-async function refreshCloudOnly(){
-  if(!cloud||!cloudUser||cloudBusy||!cloudReady)return;
-  try{
-    const remote=await fetchCloudRows();
-    trades=remote.ts.filter(x=>x?.data).map(x=>normalizeTrade({...x.data,id:x.data.id??x.id}));
-    if(remote.rs.length) reviews=Object.fromEntries(remote.rs.map(x=>[x.key,x.data]));
-    if(remote.ss?.data){acc=remote.ss.data.account||acc;if(remote.ss.data.appearance){localStorage.setItem(APPEARANCE_KEY,JSON.stringify(remote.ss.data.appearance));applyAppearance()}}
-    saveLocalSnapshot(); setCloudStatus('Synced',true); render();renderCalendar();renderWeeklyPerformance();
-  }catch(e){console.error(e);setCloudStatus('Refresh error',false,true)}
-}
-function startCloudRefresh(){
-  if(cloudRefreshTimer)clearInterval(cloudRefreshTimer);
-  cloudRefreshTimer=setInterval(()=>{if(!document.hidden)refreshCloudOnly()},60000);
-  if(!window.cloudRefreshListeners){
-    window.cloudRefreshListeners=true;
-    window.addEventListener('focus',()=>refreshCloudOnly());
-    document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshCloudOnly()});
-  }
-}
-async function syncCloud(forceAll=false){if(!cloud||!cloudUser||cloudBusy)return;cloudBusy=true;setCloudStatus('Syncing…');try{const user_id=cloudUser.id;const pending=forceAll?trades:trades.filter(t=>dirtyTradeIds.has(String(t.id)));for(const t of pending){const {error}=await cloud.from(CLOUD_TABLES.trades).upsert({id:String(t.id),user_id,data:t},{onConflict:'id,user_id'});if(error)throw error;dirtyTradeIds.delete(String(t.id));localStorage.setItem('crtProDirtyTradeIds',JSON.stringify([...dirtyTradeIds]))}const reviewRows=Object.entries(reviews).map(([key,data])=>({user_id,key,data}));if(reviewRows.length){const {error}=await cloud.from(CLOUD_TABLES.reviews).upsert(reviewRows,{onConflict:'user_id,key'});if(error)throw error}const {error:se}=await cloud.from(CLOUD_TABLES.settings).upsert({user_id,data:{account:acc,appearance:getAppearance()}},{onConflict:'user_id'});if(se)throw se;cloudReady=true;setCloudStatus('Synced',true)}finally{cloudBusy=false}}
-async function syncNow(){if(!cloudUser){showAuthMsg('Sign in first.');return}showAuthMsg('Syncing local journal to cloud…');try{await syncCloud();showAuthMsg('Synced. Your journal is now available on other devices when you sign in.')}catch(e){showAuthMsg('Sync failed: '+(e.message||e))}}
+function cloudToken(){return localStorage.getItem('crtProCloudToken')||''}
+function cloudRevision(){return Number(localStorage.getItem('crtProCloudRevision')||0)}
+function cloudIsDirty(){return localStorage.getItem('crtProCloudDirty')==='1'}
+function setCloudStatus(text,ok=false,err=false){if($('cloudStatus'))$('cloudStatus').textContent=text;const dot=$('cloudDot');if(dot)dot.className='cloud-dot '+(ok?'ok':err?'err':'')}
+async function cloudRequest(path,options={}){const token=cloudToken();const headers={'Content-Type':'application/json',...(options.headers||{})};if(token)headers.Authorization='Bearer '+token;const response=await fetch(CLOUDFLARE_SYNC_URL+path,{...options,headers});let data={};try{data=await response.json()}catch(e){}if(!response.ok){const error=new Error(data.error||'Cloud request failed ('+response.status+').');error.status=response.status;error.conflict=!!data.conflict;throw error}return data}
+function localSnapshot(){return{trades,account:acc,reviews,appearance:getAppearance()}}
+function saveLocalSnapshot(){localStorage.setItem('crtProTrades',JSON.stringify(trades));localStorage.setItem('crtProReviews',JSON.stringify(reviews));localStorage.setItem('crtProAccount',JSON.stringify(acc));localStorage.removeItem('crtProDirtyTradeIds');dirtyTradeIds.clear();localStorage.setItem('crtProCloudDirty','0')}
+function applyRemoteSnapshot(remote){trades=(Array.isArray(remote.trades)?remote.trades:[]).map(normalizeTrade);reviews=remote.reviews&&typeof remote.reviews==='object'?remote.reviews:{};acc=remote.account&&typeof remote.account==='object'?remote.account:{start:5000,risk:1};if(remote.appearance&&typeof remote.appearance==='object'){localStorage.setItem(APPEARANCE_KEY,JSON.stringify(remote.appearance))}else{localStorage.removeItem(APPEARANCE_KEY)}applyAppearance();saveLocalSnapshot();localStorage.setItem('crtProCloudRevision',String(Number(remote.revision||0)));render();renderCalendar();if(typeof renderWeeklyPerformance==='function')renderWeeklyPerformance()}
+async function initCloud(){cloud=null;cloudUser=null;cloudReady=false;if(!cloudToken()){setCloudStatus('Not connected — saved on this device',true);return}try{const remote=await cloudRequest('/sync');if(Number(remote.revision||0)>0){if(!cloudIsDirty()){applyRemoteSnapshot(remote);setCloudStatus('Connected — cloud journal loaded',true)}else{cloudReady=true;setCloudStatus('Local changes waiting to sync',false)}}else{setCloudStatus('Device paired — initial setup needed',false)}}catch(e){console.error(e);setCloudStatus('Cloud connection needs attention',false,true)}}
+async function connectCloudDevice(){if(cloudBusy)return;cloudBusy=true;try{let token=cloudToken();if(!token){const code=prompt('Enter the private pairing code you created in Cloudflare. Do not send it to anyone.');if(!code)return;const paired=await cloudRequest('/pair',{method:'POST',body:JSON.stringify({code,deviceName:'Journal device'})});if(!paired.token)throw new Error('The server did not return a device token.');token=paired.token;localStorage.setItem('crtProCloudToken',token)}const remote=await cloudRequest('/sync');if(Number(remote.revision||0)>0){if(cloudIsDirty()){setCloudStatus('Cloud has newer data. Local changes were kept; please contact support before syncing.',false,true);return}applyRemoteSnapshot(remote);cloudReady=true;setCloudStatus('Connected — cloud journal loaded',true);startCloudRefresh();alert('This device is connected. The cloud journal has been downloaded to this device.')}else{const isInitial=confirm('The cloud journal is still empty. Is this the laptop whose empty journal should become the starting copy? Choose OK only on the laptop.');if(!isInitial){setCloudStatus('Paired, but waiting for the laptop setup',false);return}const payload=localSnapshot();const saved=await cloudRequest('/sync',{method:'POST',body:JSON.stringify({expectedRevision:0,trades:payload.trades,reviews:payload.reviews,account:payload.account,appearance:payload.appearance})});localStorage.setItem('crtProCloudRevision',String(saved.revision));localStorage.setItem('crtProCloudDirty','0');cloudReady=true;setCloudStatus('Laptop connected — starting journal saved to cloud',true);startCloudRefresh();alert('Laptop setup is complete. Your empty journal is now the starting cloud copy. Keep Supabase unchanged for now.')}}catch(e){console.error(e);setCloudStatus(e.message||'Cloud connection failed',false,true);alert('Cloud connection failed: '+(e.message||e))}finally{cloudBusy=false}}
+let syncTimer=null;
+function queueCloudSync(){clearTimeout(syncTimer);if(!cloudToken()||!cloudReady)return;syncTimer=setTimeout(()=>syncCloud().catch(e=>{console.error(e);setCloudStatus(e.message||'Sync error',false,true)}),700)}
+async function syncCloud(){if(!cloudToken()||!cloudReady||cloudBusy)return;cloudBusy=true;setCloudStatus('Checking cloud changes…');try{const remote=await cloudRequest('/sync');const known=cloudRevision();if(Number(remote.revision||0)!==known){if(cloudIsDirty()){setCloudStatus('Sync paused: another device has newer data. Your local changes are safe.',false,true);return}applyRemoteSnapshot(remote);setCloudStatus('Updated from cloud',true);return}if(!cloudIsDirty()){setCloudStatus('Synced',true);return}const payload=localSnapshot();const saved=await cloudRequest('/sync',{method:'POST',body:JSON.stringify({expectedRevision:known,trades:payload.trades,reviews:payload.reviews,account:payload.account,appearance:payload.appearance})});localStorage.setItem('crtProCloudRevision',String(saved.revision));localStorage.setItem('crtProCloudDirty','0');cloudReady=true;setCloudStatus('Synced',true)}catch(e){if(e.conflict){setCloudStatus('Sync paused: cloud changed elsewhere. Local data is safe.',false,true)}else{setCloudStatus(e.message||'Sync error',false,true)}throw e}finally{cloudBusy=false}}
+async function syncNow(){try{await syncCloud();alert('Cloud sync checked. '+($('cloudStatus')?.textContent||''))}catch(e){alert('Sync could not finish: '+(e.message||e))}}
+function startCloudRefresh(){if(cloudRefreshTimer)clearInterval(cloudRefreshTimer);cloudRefreshTimer=setInterval(()=>{if(!document.hidden&&!cloudIsDirty())syncCloud().catch(()=>{})},60000);if(!window.cloudRefreshListeners){window.cloudRefreshListeners=true;window.addEventListener('focus',()=>{if(!cloudIsDirty())syncCloud().catch(()=>{})});document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!cloudIsDirty())syncCloud().catch(()=>{})})}}
 function page(id,btn){let target=$(id);if(!target)return;document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));target.classList.add('active');document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));if(btn)btn.classList.add('active');let titles={dashboard:'Trading Dashboard',add:'Record Trade',trades:'Trade Log',calendar:'Trade Calendar',analytics:'Analytics',daily:'Daily Review',weekly:'Weekly Review',monthly:'Monthly Review',account:'Account Settings',tradeDetail:'Trade Review',settings:'Journal Settings'};if($('title'))$('title').textContent=titles[id]||'Trading Journal';render();if(id==='daily')renderDaily();if(id==='weekly')renderWeekly();if(id==='monthly')renderMonthly();if(id==='calendar')renderCalendar()}
 function timingGuide(session){if(session==='Asia')return 'Kenya time (EAT): valid Asian trading window is 2:00 AM–7:00 AM.';if(session==='London')return 'Kenya time (EAT): valid London trading window is 10:00 AM–3:00 PM.';if(session==='New York')return 'New York time: use the 8:00 AM 1H candle high/low. Do not enter before 9:30 AM. Stop taking this setup after 11:30 AM.';return 'Select a session to view its timing guide.'}
 function timingStatus(t){const s=t?.session||'';const v=t?.entryTime||'';if(!v)return 'Not recorded';const [h,m]=v.split(':').map(Number);const mins=h*60+m;if(s==='Asia')return mins>=120&&mins<=420?'Valid — Asia window (EAT)':'Outside Asia window (2:00 AM–7:00 AM EAT)';if(s==='London')return mins>=600&&mins<=900?'Valid — London window (EAT)':'Outside London window (10:00 AM–3:00 PM EAT)';if(s==='New York')return mins>=570&&mins<=690?'Valid — NY window':'Outside NY window';return 'Not recorded';}
@@ -629,8 +580,9 @@ render();renderCalendar();
 </script>
 <!-- LAPTOP-ONLY STORAGE STATUS -->
 <div class="cloudbar" id="cloudBar">
-  <span class="cloud-dot ok"></span>
-  <span id="cloudStatus">Laptop-only storage — saved in this browser</span>
+  <span class="cloud-dot ok" id="cloudDot"></span>
+  <span id="cloudStatus">Not connected — saved on this device</span>
+  <button type="button" onclick="connectCloudDevice()" title="Connect this journal device to the Cloudflare journal">Connect to Cloud</button>
   <button id="localBackupBtn" type="button" onclick="downloadLocalBackup()" title="Download a full backup of this laptop’s journal data">Download Backup</button>
 </div>
 
