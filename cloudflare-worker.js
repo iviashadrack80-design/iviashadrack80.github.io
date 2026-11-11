@@ -29,7 +29,10 @@ function randomToken() {
 async function ensureTables(db) {
   await db.batch([
     db.prepare("CREATE TABLE IF NOT EXISTS journal_devices (token_hash TEXT PRIMARY KEY, device_name TEXT NOT NULL, created_at INTEGER NOT NULL, last_seen INTEGER NOT NULL)"),
-    db.prepare("CREATE TABLE IF NOT EXISTS journal_sync_meta (id INTEGER PRIMARY KEY CHECK (id = 1), revision INTEGER NOT NULL)")
+    db.prepare("CREATE TABLE IF NOT EXISTS journal_sync_meta (id INTEGER PRIMARY KEY CHECK (id = 1), revision INTEGER NOT NULL)"),
+    db.prepare("CREATE TABLE IF NOT EXISTS journal_trades (id TEXT NOT NULL, user_id TEXT NOT NULL, data TEXT NOT NULL, PRIMARY KEY (user_id, id))"),
+    db.prepare("CREATE TABLE IF NOT EXISTS journal_reviews (user_id TEXT NOT NULL, key TEXT NOT NULL, data TEXT NOT NULL, PRIMARY KEY (user_id, key))"),
+    db.prepare("CREATE TABLE IF NOT EXISTS journal_settings (user_id TEXT PRIMARY KEY, data TEXT NOT NULL)")
   ]);
 }
 function parseJson(value, fallback) {
