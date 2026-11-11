@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "shadracktrades-sync",
+  "main": "cloudflare-worker.js",
+  "compatibility_date": "2026-11-11",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "shadracktrades-db",
+      "database_id": "3a8f438d-c8c4-40b9-bebe-54a533d57835"
+    }
+  ]
+}
